@@ -28,6 +28,21 @@ class GomantleViewModel(private val gomantleRepository: GomantleRepository) : Vi
     var userGuess by mutableStateOf("")
     var guessedWords: MutableList<Word> = mutableStateListOf()
     var userList: List<User> = mutableStateListOf()
+    var isWordDescriptionVisible by mutableStateOf(false)
+    var selectedWord: String = ""
+
+    fun showWordDescription(word: String) {
+        isWordDescriptionVisible = true
+        selectedWord = word
+    }
+
+    fun getDescription(): String {
+        return selectedWord
+    }
+
+    fun hideWordDescription() {
+        isWordDescriptionVisible = false
+    }
 
     fun updateCurrentView(viewType: ViewType) {
         _uiState.update {

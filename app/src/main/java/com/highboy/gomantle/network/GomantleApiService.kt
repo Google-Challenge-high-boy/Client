@@ -4,6 +4,6 @@ import com.highboy.gomantle.data.User
 import retrofit2.http.GET
 
 interface GomantleApiService {
-    @GET("photos")
+    @GET("users")
     suspend fun getUsers(): List<User>
 }
