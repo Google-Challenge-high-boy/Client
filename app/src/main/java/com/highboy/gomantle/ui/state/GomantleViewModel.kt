@@ -8,20 +8,34 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.highboy.gomantle.GomantleApplication
-import com.highboy.gomantle.data.GomantleRepository
 import com.highboy.gomantle.data.User
 import com.highboy.gomantle.data.ViewType
 import com.highboy.gomantle.data.Word
+import com.highboy.gomantle.network.GomantleApiService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import java.io.IOException
 
 
-class GomantleViewModel(private val gomantleRepository: GomantleRepository) : ViewModel() {
+class GomantleViewModel() : ViewModel() {
+
+    // network
+    private val BASE_URL = ""
+
+    private val retrofit: Retrofit = Retrofit.Builder()
+        .addConverterFactory(GsonConverterFactory.create())
+        .baseUrl(BASE_URL)
+        .build()
+
+    private val retrofitService: GomantleApiService by lazy {
+        retrofit.create(GomantleApiService::class.java)
+    }
+
     private val _uiState = MutableStateFlow(GomantleUiState())
     val uiState: StateFlow<GomantleUiState> = _uiState
 
@@ -31,6 +45,8 @@ class GomantleViewModel(private val gomantleRepository: GomantleRepository) : Vi
     var isWordDescriptionVisible by mutableStateOf(false)
     var selectedWord: String = ""
 
+    // game
+    //
     fun showWordDescription(word: String) {
         isWordDescriptionVisible = true
         selectedWord = word
@@ -69,12 +85,12 @@ class GomantleViewModel(private val gomantleRepository: GomantleRepository) : Vi
         }
     }
 
-    fun getWordSimilarity(word: String): Double {
+    private fun getWordSimilarity(word: String): Double {
         return 0.0
     }
 
     // 같은 단어를 입력했었는지 확인.
-    fun checkIfGuessedWordExists(word: Word): Boolean {
+    private fun checkIfGuessedWordExists(word: Word): Boolean {
         for(existingWord in guessedWords) {
             if(word.word == existingWord.word) return true
         }
@@ -82,14 +98,14 @@ class GomantleViewModel(private val gomantleRepository: GomantleRepository) : Vi
     }
 
     // 단어가 존재하지 않으면 단어를 추가.
-    fun addGuessedWord(guessedWord: String) {
+    private fun addGuessedWord(guessedWord: String) {
         guessedWords.add(Word(guessedWord, getWordSimilarity(guessedWord)))
     }
 
-    fun getUsers() {
+    private fun getUsers() {
         viewModelScope.launch {
             userList = try {
-                gomantleRepository.getUsers()
+                retrofitService.getUsers()
             } catch(e: IOException) {
                 Log.d("", "")
                 emptyList()
@@ -100,13 +116,4 @@ class GomantleViewModel(private val gomantleRepository: GomantleRepository) : Vi
         }
     }
 
-    companion object {
-        val Factory: ViewModelProvider.Factory = viewModelFactory {
-            initializer {
-                val application = (this[APPLICATION_KEY] as GomantleApplication)
-                val gomantleRepository = application.container.gomantleRepository
-                GomantleViewModel(gomantleRepository = gomantleRepository)
-            }
-        }
-    }
 }
