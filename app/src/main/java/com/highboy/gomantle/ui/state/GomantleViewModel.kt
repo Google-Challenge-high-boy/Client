@@ -25,7 +25,7 @@ import java.io.IOException
 class GomantleViewModel() : ViewModel() {
 
     // network
-    private val BASE_URL = ""
+    private val BASE_URL = "https://jsonplaceholder.typicode.com"
 
     private val retrofit: Retrofit = Retrofit.Builder()
         .addConverterFactory(GsonConverterFactory.create())

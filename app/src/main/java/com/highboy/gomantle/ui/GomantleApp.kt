@@ -11,7 +11,7 @@ import com.highboy.gomantle.ui.theme.GomantleTheme
 
 @Composable
 fun GomantleApp(modifier: Modifier = Modifier) {
-    val viewModel: GomantleViewModel = viewModel(factory = GomantleViewModel.Factory)
+    val viewModel: GomantleViewModel = viewModel()
     val gomantleUiState = viewModel.uiState.collectAsState().value
     GomantleTheme() {
         GomantleHomeScreen(
