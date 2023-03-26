@@ -1,17 +1,13 @@
 package com.highboy.gomantle.ui.state
 
 import android.util.Log
-import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
 import com.highboy.gomantle.data.User
 import com.highboy.gomantle.data.ViewType
 import com.highboy.gomantle.data.Word
 import com.highboy.gomantle.network.GomantleApiService
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -36,28 +32,75 @@ class GomantleViewModel() : ViewModel() {
         retrofit.create(GomantleApiService::class.java)
     }
 
+    // login
+    private val _isSignInChecked = MutableStateFlow(false)
+    val isSignInChecked: StateFlow<Boolean> = _isSignInChecked
+
+    private val _isSignedIn = MutableStateFlow(false)
+    val isSignedIn: StateFlow<Boolean> = _isSignedIn
+
+    // Infinite Scroll
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading
+
+    private val _isAllLoaded = MutableStateFlow(false)
+    val isAllLoaded: StateFlow<Boolean> = _isAllLoaded
+
+    private val _userList = MutableStateFlow(emptyList<User>())
+    val userList: StateFlow<List<User>> = _userList
+
+    private var pageCount = 1
+
+    fun loadMore() {
+        viewModelScope.launch {
+
+            _isLoading.update { true }
+            delay(1000)
+            val items = arrayListOf<User>()
+            repeat(20) {
+                items.add(User(1, "User$it"))
+            }
+            _userList.update {
+                _userList.value + items
+            }
+            _isLoading.update { false }
+            pageCount++
+            if(pageCount > 10) {
+                _isAllLoaded.update { true }
+            }
+        }
+    }
+
+    //
+
     private val _uiState = MutableStateFlow(GomantleUiState())
     val uiState: StateFlow<GomantleUiState> = _uiState
 
-    var userGuess by mutableStateOf("")
-    var guessedWords: MutableList<Word> = mutableStateListOf()
-    var userList: List<User> = mutableStateListOf()
-    var isWordDescriptionVisible by mutableStateOf(false)
-    var selectedWord: String = ""
+    private val _guessedWords = MutableStateFlow(emptyList<Word>())
+    val guessedWords: StateFlow<List<Word>> = _guessedWords
+
+    private val _userGuess = MutableStateFlow("")
+    val userGuess: StateFlow<String> = _userGuess
+
+    private val _selectedWord = MutableStateFlow("")
+    val selectedWord: StateFlow<String> = _selectedWord
+
+    private val _isWordDescriptionVisible = MutableStateFlow(false)
+    val isWordDescriptionVisible: StateFlow<Boolean> = _isWordDescriptionVisible
 
     // game
     //
     fun showWordDescription(word: String) {
-        isWordDescriptionVisible = true
-        selectedWord = word
+        _isWordDescriptionVisible.update { true }
+        _selectedWord.update { word }
     }
 
     fun getDescription(): String {
-        return selectedWord
+        return selectedWord.value
     }
 
     fun hideWordDescription() {
-        isWordDescriptionVisible = false
+        _isWordDescriptionVisible.update { false }
     }
 
     fun updateCurrentView(viewType: ViewType) {
@@ -73,25 +116,27 @@ class GomantleViewModel() : ViewModel() {
     }
 
     fun updateUserGuessTextField(guessedWord: String) {
-        userGuess = guessedWord
+        _userGuess.update {
+            guessedWord
+        }
     }
 
     // 단어 입력 후 Done을 눌렀을 때.
     fun checkUserGuess() {
-        val guessedWord = Word(userGuess, getWordSimilarity(userGuess))
+        val guessedWord = Word(userGuess.value, getWordSimilarity(userGuess.value))
 
         if(!checkIfGuessedWordExists(guessedWord)) {
-            addGuessedWord(userGuess)
+            addGuessedWord(userGuess.value)
         }
     }
 
-    private fun getWordSimilarity(word: String): Double {
-        return 0.0
+    private fun getWordSimilarity(word: String): Float {
+        return 0f
     }
 
     // 같은 단어를 입력했었는지 확인.
     private fun checkIfGuessedWordExists(word: Word): Boolean {
-        for(existingWord in guessedWords) {
+        for(existingWord in guessedWords.value) {
             if(word.word == existingWord.word) return true
         }
         return false
@@ -99,19 +144,23 @@ class GomantleViewModel() : ViewModel() {
 
     // 단어가 존재하지 않으면 단어를 추가.
     private fun addGuessedWord(guessedWord: String) {
-        guessedWords.add(Word(guessedWord, getWordSimilarity(guessedWord)))
+        _guessedWords.update {
+            it + Word(guessedWord, getWordSimilarity(guessedWord))
+        }
     }
 
     private fun getUsers() {
         viewModelScope.launch {
-            userList = try {
-                retrofitService.getUsers()
-            } catch(e: IOException) {
-                Log.d("", "")
-                emptyList()
-            } catch(e: HttpException) {
-                Log.d("", "")
-                emptyList()
+            _userList.update {
+                try {
+                    retrofitService.getUsers()
+                } catch(e: IOException) {
+                    Log.d("", "")
+                    emptyList()
+                } catch(e: HttpException) {
+                    Log.d("", "")
+                    emptyList()
+                }
             }
         }
     }

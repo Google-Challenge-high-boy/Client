@@ -10,26 +10,31 @@ import com.highboy.gomantle.ui.state.GomantleViewModel
 import com.highboy.gomantle.ui.theme.GomantleTheme
 
 @Composable
-fun GomantleApp(modifier: Modifier = Modifier) {
+fun GomantleApp(
+    modifier: Modifier = Modifier,
+    startSignIn: () -> Unit,
+    isSignInChecked: Boolean,
+    updateIsSignInChecked: (Boolean) -> Unit,
+    isSignedIn: Boolean
+) {
     val viewModel: GomantleViewModel = viewModel()
     val gomantleUiState = viewModel.uiState.collectAsState().value
-    GomantleTheme() {
-        GomantleHomeScreen(
-            gomantleUiState = gomantleUiState,
-            onTabPressed = { viewType: ViewType ->
-                viewModel.updateCurrentView(viewType = viewType)
-            },
-            modifier = modifier,
-            viewModel = viewModel
-        )
+    GomantleTheme {
+        if(!isSignInChecked) {
+            GomantleStartScreen(startSignIn = startSignIn, updateIsSignInChecked = updateIsSignInChecked)
+        } else {
+            GomantleHomeScreen(
+                gomantleUiState = gomantleUiState,
+                onTabPressed = { viewType: ViewType ->
+                    viewModel.updateCurrentView(viewType = viewType)
+                },
+                modifier = modifier,
+                viewModel = viewModel,
+                isSignedIn = isSignedIn,
+                startSignIn = startSignIn
+            )
+        }
+
     }
 
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GomantleAppPreview() {
-    GomantleTheme() {
-        GomantleApp()
-    }
 }

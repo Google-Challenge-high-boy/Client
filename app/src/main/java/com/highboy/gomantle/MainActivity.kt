@@ -2,12 +2,10 @@ package com.highboy.gomantle
 
 import android.app.Activity
 import android.content.ContentValues.TAG
-import android.content.Intent
 import android.content.IntentSender
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.IntentSenderRequest
@@ -15,29 +13,33 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
-import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
-import com.google.android.gms.auth.api.credentials.CredentialsClient
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
-import com.google.android.gms.auth.api.identity.GetSignInIntentRequest
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.auth.api.identity.SignInClient
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.android.gms.common.api.ApiException
 import com.highboy.gomantle.ui.GomantleApp
+import com.highboy.gomantle.ui.state.GomantleViewModel
 import com.highboy.gomantle.ui.theme.GomantleTheme
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.update
 
 class MainActivity : ComponentActivity() {
     private lateinit var oneTapClient: SignInClient
     private lateinit var signInRequest: BeginSignInRequest
     private lateinit var signUpRequest: BeginSignInRequest
+    private val isSignInChecked = MutableStateFlow(false)
+    private val isSignedIn = MutableStateFlow(false)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.e("activity", "GomantleMainActivity")
+
+
         setContent {
             GomantleTheme {
                 // A surface container using the 'background' color from the theme
@@ -45,11 +47,13 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    GomantleApp()
+                    GomantleApp(startSignIn = this::startSignIn, isSignInChecked = isSignInChecked.collectAsState().value, updateIsSignInChecked = { updateIsSignInChecked(it) }, isSignedIn = isSignedIn.collectAsState().value)
                 }
             }
         }
+    }
 
+    private fun startSignIn() {
         // Configure the One Tap sign-in client
         oneTapClient = Identity.getSignInClient(this)
         signInRequest = BeginSignInRequest.builder()
@@ -77,9 +81,8 @@ class MainActivity : ComponentActivity() {
         oneTapClient.beginSignIn(signInRequest)
             .addOnSuccessListener(this) { result ->
                 try {
-                    startIntentSenderForResult(
-                        result.pendingIntent.intentSender, 1,
-                        null, 0, 0, 0, null)
+                    val intentSenderRequest = IntentSenderRequest.Builder(result.pendingIntent.intentSender).build()
+                    startForResult.launch(intentSenderRequest)
                 } catch (e: IntentSender.SendIntentException) {
                     Log.e(TAG, "Couldn't start One Tap UI: ${e.localizedMessage}")
                 }
@@ -91,9 +94,9 @@ class MainActivity : ComponentActivity() {
                 oneTapClient.beginSignIn(signUpRequest)
                     .addOnSuccessListener(this) { result ->
                         try {
-                            startIntentSenderForResult(
-                                result.pendingIntent.intentSender, 1,
-                                null, 0, 0, 0)
+                            val intentSenderRequest = IntentSenderRequest.Builder(result.pendingIntent.intentSender).build()
+                            startForResult.launch(intentSenderRequest)
+
                         } catch (e: IntentSender.SendIntentException) {
                             Log.e(TAG, "Couldn't start One Tap UI: ${e.localizedMessage}")
                         }
@@ -105,15 +108,45 @@ class MainActivity : ComponentActivity() {
 
                 Log.e(TAG, e.localizedMessage)
             }
+    }
 
+    private val startForResult = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
+        result: ActivityResult ->
+        if(result.resultCode == Activity.RESULT_OK) {
+            Log.e("startForResult", "Result_Ok")
+            val credential = oneTapClient.getSignInCredentialFromIntent(result.data)
+            val idToken = credential.googleIdToken
+            val username = credential.id
+            val password = credential.password
+            Log.e("startForResult", idToken.toString())
+            Log.e("startForResult", username.toString())
+            Log.e("startForResult", password.toString())
+            updateIsSignInChecked(true)
+            updateIsSignedIn(true)
+        } else {
+            Log.e("startForResult", "Result_NoOk")
+        }
+    }
 
+    private fun updateIsSignInChecked(checked: Boolean) {
+        isSignInChecked.update { checked }
+    }
+
+    private fun updateIsSignedIn(signedIn: Boolean) {
+        isSignedIn.update { signedIn }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        setContent {
+            SavePreferences()
+        }
     }
 }
 
-@Preview(showBackground = true)
 @Composable
-fun DefaultPreview() {
-    GomantleTheme {
-        GomantleApp()
-    }
+fun SavePreferences() {
+    val viewModel: GomantleViewModel = viewModel()
+    val prefRepository = PrefRepository(LocalContext.current)
+    prefRepository.putListOfString(GlobalConstants.PREF_HISTORY, viewModel.guessedWords.collectAsState().value.map { it.word } )
 }

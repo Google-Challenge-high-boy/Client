@@ -1,18 +1,22 @@
 package com.highboy.gomantle.ui
 
 import androidx.annotation.DrawableRes
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
-import androidx.lifecycle.ViewModel
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import com.highboy.gomantle.R
 import com.highboy.gomantle.data.ViewType
 import com.highboy.gomantle.ui.state.GomantleUiState
@@ -23,7 +27,9 @@ fun GomantleHomeScreen(
     gomantleUiState: GomantleUiState,
     onTabPressed: (ViewType) -> Unit,
     modifier: Modifier,
-    viewModel: GomantleViewModel
+    viewModel: GomantleViewModel,
+    isSignedIn: Boolean,
+    startSignIn: () -> Unit
 ) {
     val navigationItemContentList = listOf(
         NavigationItemContent(
@@ -50,7 +56,9 @@ fun GomantleHomeScreen(
         navigationItemContentList = navigationItemContentList,
         onTabPressed = onTabPressed,
         modifier = modifier,
-        viewModel = viewModel
+        viewModel = viewModel,
+        isSignedIn = isSignedIn,
+        startSignIn = startSignIn
     )
 }
 
@@ -60,13 +68,17 @@ private fun GomantleAppContent(
     navigationItemContentList: List<NavigationItemContent>,
     onTabPressed: (ViewType) -> Unit,
     modifier: Modifier,
-    viewModel: GomantleViewModel
+    viewModel: GomantleViewModel,
+    isSignedIn: Boolean,
+    startSignIn: () -> Unit
 ) {
     Column() {
         GomantleOnlyContentView(
             modifier = Modifier.weight(13f),
             currentTab = gomantleUiState.currentViewType,
-            viewModel = viewModel
+            viewModel = viewModel,
+            isSignedIn = isSignedIn,
+            startSignIn = startSignIn
         )
         GomantleBottomNavigationBar(
             navigationItemContentList = navigationItemContentList,
@@ -81,8 +93,13 @@ private fun GomantleAppContent(
 fun GomantleOnlyContentView(
     modifier: Modifier = Modifier,
     currentTab: ViewType,
-    viewModel: GomantleViewModel
+    viewModel: GomantleViewModel,
+    isSignedIn: Boolean,
+    startSignIn: () -> Unit
 ) {
+    val isLoading = viewModel.isLoading.collectAsState().value
+    val isAllLoaded = viewModel.isAllLoaded.collectAsState().value
+
     when(currentTab) {
         ViewType.Game -> {
             GomantleGameScreen(
@@ -91,21 +108,75 @@ fun GomantleOnlyContentView(
             )
         }
         ViewType.Friends -> {
-            GomantleFriendsScreen(
-                modifier = modifier
-            )
+            if(isSignedIn) {
+                GomantleFriendsScreen(
+                    modifier = modifier
+                )
+            } else {
+                RecommendSignIn(
+                    modifier = modifier,
+                    startSignIn = startSignIn
+                )
+            }
         }
         ViewType.Rank -> {
-            GomantleRankScreen(
-                modifier = modifier,
-                viewModel = viewModel
-            )
+            if(isSignedIn) {
+                GomantleRankScreen(
+                    modifier = modifier,
+                    viewModel = viewModel,
+                    loadMore = {
+                        if(!isLoading && !isAllLoaded) {
+                            viewModel.loadMore()
+                        }
+                    }
+                )
+            } else {
+                RecommendSignIn(
+                    modifier = modifier,
+                    startSignIn = startSignIn
+                )
+            }
         }
         ViewType.MyPage -> {
-            GomantleMyPageScreen(
-                modifier = modifier
-            )
+            if(isSignedIn) {
+                GomantleMyPageScreen(
+                    modifier = modifier
+                )
+            } else {
+                RecommendSignIn(
+                    modifier = modifier,
+                    startSignIn = startSignIn
+                )
+            }
+
         }
+    }
+}
+
+@Composable
+fun RecommendSignIn(
+    modifier: Modifier,
+    startSignIn: () -> Unit
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Sign in to use",
+            fontSize = 40.sp,
+            fontWeight = FontWeight.ExtraBold
+        )
+        Text(
+            text = "Sign In",
+            modifier = Modifier
+                .clickable {
+                    startSignIn()
+                },
+            fontSize = 30.sp,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 

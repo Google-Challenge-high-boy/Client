@@ -53,8 +53,8 @@ fun GomantleGameScreen(
             updateText = viewModel::updateUserGuessTextField,
         )
         WordHistoryBox(
-            guessedWords = viewModel.guessedWords,
-            wordDescriptionVisibility = viewModel.isWordDescriptionVisible,
+            guessedWords = viewModel.guessedWords.collectAsState().value,
+            wordDescriptionVisibility = viewModel.isWordDescriptionVisible.collectAsState().value,
             getDescription = viewModel::getDescription,
             showWordDescription = viewModel::showWordDescription,
             hideWordDescription = viewModel::hideWordDescription
@@ -76,9 +76,9 @@ fun WordInputBox(
             .padding(start = 20.dp, top = 20.dp, end = 20.dp)
             .height(intrinsicSize = IntrinsicSize.Min)
     ) {
-        Box() {
+        Box {
             BasicTextField(
-                value = viewModel.userGuess,
+                value = viewModel.userGuess.collectAsState().value,
                 onValueChange = { updateText(it) },
                 modifier = Modifier
                     .height(intrinsicSize = IntrinsicSize.Min)
@@ -92,7 +92,7 @@ fun WordInputBox(
                 ),
                 singleLine = true
             )
-            if (viewModel.userGuess.isEmpty()) {
+            if (viewModel.userGuess.collectAsState().value.isEmpty()) {
                 Text(
                     modifier = Modifier
                         .height(intrinsicSize = IntrinsicSize.Min)
