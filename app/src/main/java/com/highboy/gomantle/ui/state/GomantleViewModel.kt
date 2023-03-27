@@ -81,6 +81,9 @@ class GomantleViewModel() : ViewModel() {
     private val _isWordDescriptionVisible = MutableStateFlow(false)
     val isWordDescriptionVisible: StateFlow<Boolean> = _isWordDescriptionVisible
 
+    private val _placeHolder = MutableStateFlow("Guess the word!")
+    val placeHolder: StateFlow<String> = _placeHolder
+
     fun loadMore() {
         viewModelScope.launch {
 
@@ -138,6 +141,14 @@ class GomantleViewModel() : ViewModel() {
 
     // 단어 입력 후 Done을 눌렀을 때.
     fun checkUserGuess() {
+        if(userGuess.value == "") {
+            viewModelScope.launch {
+                _placeHolder.update { "Please enter at least one word!" }
+                delay(3000)
+                _placeHolder.update { "Guess the word!" }
+            }
+            return
+        }
         lateinit var guessedWord: Word
         viewModelScope.launch {
             guessedWord = Word(userGuess.value, getWordSimilarity(userGuess.value))
@@ -150,6 +161,7 @@ class GomantleViewModel() : ViewModel() {
 
     // 단어의 유사도를 분석.
     private suspend fun getWordSimilarity(word: String): Float {
+
         var similarity = 0f
         val getSimilarityRequest = GetSimilarityRequest(userGuess.value, GlobalConstants.TRY_COUNT)
         viewModelScope.launch {

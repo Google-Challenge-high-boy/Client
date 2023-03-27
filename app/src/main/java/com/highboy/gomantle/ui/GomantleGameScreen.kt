@@ -123,7 +123,7 @@ fun WordInputBox(
                     modifier = Modifier
                         .height(intrinsicSize = IntrinsicSize.Min)
                         .padding(20.dp),
-                    text = "Guess the word"
+                    text = viewModel.placeHolder.collectAsState().value
                 )
             }
         }
