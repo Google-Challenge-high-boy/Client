@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.getSystemService
 import com.google.accompanist.web.WebView
@@ -69,6 +70,7 @@ fun WordInputBox(
     viewModel: GomantleViewModel,
     updateText: (String) -> Unit
 ) {
+    val userGuess = viewModel.userGuess.collectAsState().value
     Card(
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         modifier = Modifier
@@ -76,19 +78,43 @@ fun WordInputBox(
             .padding(start = 20.dp, top = 20.dp, end = 20.dp)
             .height(intrinsicSize = IntrinsicSize.Min)
     ) {
-        Box {
+        Box(
+            contentAlignment = Alignment.CenterStart
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize(),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                Card(
+                    elevation = CardDefaults.cardElevation(4.dp),
+                    modifier = Modifier
+                        .clickable {
+                            viewModel.checkUserGuess()
+                            updateText("")
+                        }
+                        .padding(6.dp)
+                        .height(40.dp)
+                        .width(40.dp)
+                ) {
+
+                }
+            }
             BasicTextField(
-                value = viewModel.userGuess.collectAsState().value,
+                value = userGuess,
                 onValueChange = { updateText(it) },
                 modifier = Modifier
                     .height(intrinsicSize = IntrinsicSize.Min)
-                    .padding(20.dp)
+                    .padding(start = 20.dp, top = 20.dp, end = 52.dp, bottom = 20.dp)
                     .fillMaxWidth(),
                 keyboardOptions = KeyboardOptions.Default.copy(
                     imeAction = ImeAction.Done
                 ),
                 keyboardActions = KeyboardActions(
-                    onDone = { viewModel.checkUserGuess() }
+                    onDone = {
+                        viewModel.checkUserGuess()
+                        updateText("")
+                    }
                 ),
                 singleLine = true
             )
@@ -134,7 +160,7 @@ fun WordHistoryBox(
     }
 }
 
-// 단어 히스토리의 리스트
+// 단어 history의 리스트
 @Composable
 fun GuessedWords(
     guessedWords: List<Word>,
@@ -167,12 +193,24 @@ fun GuessedWord(
                 showWordDescription(word.word)
             }
     ) {
-        Text(
-            word.word,
+        Box(
             modifier = Modifier
-                .padding(4.dp)
                 .fillMaxWidth()
-        )
+        ) {
+            Text(
+                text = word.word,
+                modifier = Modifier
+                    .padding(4.dp)
+                    .fillMaxWidth()
+            )
+            Text(
+                text = word.similarity.toString(),
+                modifier = Modifier
+                    .padding(4.dp)
+                    .fillMaxWidth(),
+                textAlign = TextAlign.End
+            )
+        }
     }
 }
 
@@ -202,8 +240,8 @@ fun WordDescription(
                     .padding(20.dp),
                 text = getDescription()
             )
+            WordDictionaryWebView(getDescription())
         }
-        WordDictionaryWebView(getDescription())
     }
 }
 

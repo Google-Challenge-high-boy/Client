@@ -17,7 +17,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.highboy.gomantle.UserProfileActivity
 import com.highboy.gomantle.data.User
-import com.highboy.gomantle.data.UserDataProvider
 import com.highboy.gomantle.ui.state.GomantleViewModel
 import kotlinx.coroutines.flow.distinctUntilChanged
 

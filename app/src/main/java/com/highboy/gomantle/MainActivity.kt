@@ -91,20 +91,20 @@ class MainActivity : ComponentActivity() {
                 // No saved credentials found. Launch the One Tap sign-up flow, or
                 // do nothing and continue presenting the signed-out UI.
 
-                oneTapClient.beginSignIn(signUpRequest)
-                    .addOnSuccessListener(this) { result ->
-                        try {
-                            val intentSenderRequest = IntentSenderRequest.Builder(result.pendingIntent.intentSender).build()
-                            startForResult.launch(intentSenderRequest)
-
-                        } catch (e: IntentSender.SendIntentException) {
-                            Log.e(TAG, "Couldn't start One Tap UI: ${e.localizedMessage}")
-                        }
-                    }
-                    .addOnFailureListener(this) { e ->
-                        // No Google Accounts found. Just continue presenting the signed-out UI.
-                        Log.d(TAG, e.localizedMessage)
-                    }
+//                oneTapClient.beginSignIn(signUpRequest)
+//                    .addOnSuccessListener(this) { result ->
+//                        try {
+//                            val intentSenderRequest = IntentSenderRequest.Builder(result.pendingIntent.intentSender).build()
+//                            startForResult.launch(intentSenderRequest)
+//
+//                        } catch (e: IntentSender.SendIntentException) {
+//                            Log.e(TAG, "Couldn't start One Tap UI: ${e.localizedMessage}")
+//                        }
+//                    }
+//                    .addOnFailureListener(this) { e ->
+//                        // No Google Accounts found. Just continue presenting the signed-out UI.
+//                        Log.d(TAG, e.localizedMessage)
+//                    }
 
                 Log.e(TAG, e.localizedMessage)
             }
@@ -148,5 +148,5 @@ class MainActivity : ComponentActivity() {
 fun SavePreferences() {
     val viewModel: GomantleViewModel = viewModel()
     val prefRepository = PrefRepository(LocalContext.current)
-    prefRepository.putListOfString(GlobalConstants.PREF_HISTORY, viewModel.guessedWords.collectAsState().value.map { it.word } )
+    prefRepository.putListOfString(GlobalConstants.PREF_WORD_HISTORY, viewModel.guessedWords.collectAsState().value.map { it.word } )
 }
