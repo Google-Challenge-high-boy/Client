@@ -148,5 +148,5 @@ class MainActivity : ComponentActivity() {
 fun SavePreferences() {
     val viewModel: GomantleViewModel = viewModel()
     val prefRepository = PrefRepository(LocalContext.current)
-    prefRepository.putListOfString(GlobalConstants.PREF_HISTORY, viewModel.guessedWords.collectAsState().value.map { it.word } )
+    prefRepository.putListOfString(GlobalConstants.PREF_WORD_HISTORY, viewModel.guessedWords.collectAsState().value.map { it.word } )
 }
