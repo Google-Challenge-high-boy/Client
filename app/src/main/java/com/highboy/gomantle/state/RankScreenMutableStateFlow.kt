@@ -1,5 +1,6 @@
 package com.highboy.gomantle.state
 
-data class FriendScreenState(
+data class RankScreenMutableStateFlow(
     val tmp: String = ""
+
 )

@@ -31,12 +31,15 @@ import com.google.accompanist.web.WebView
 import com.google.accompanist.web.rememberWebViewState
 import com.highboy.gomantle.R
 import com.highboy.gomantle.data.Word
+import com.highboy.gomantle.state.GameScreenStateFlow
+import com.highboy.gomantle.state.GlobalStateFlow
 import com.highboy.gomantle.ui.state.GomantleViewModel
 
 @Composable
 fun GomantleGameScreen(
     modifier: Modifier = Modifier,
-    viewModel: GomantleViewModel
+    globalStateFlow: GlobalStateFlow,
+    gameScreenStateFlow: GameScreenStateFlow
 ) {
 
     Column(

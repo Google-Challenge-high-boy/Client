@@ -1,6 +1,6 @@
 package com.highboy.gomantle.state
 
-data class RankScreenState(
+data class MyPageScreenMutableStateFlow(
     val tmp: String = ""
 
 )

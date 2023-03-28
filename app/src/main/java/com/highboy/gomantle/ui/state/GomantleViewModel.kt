@@ -1,6 +1,5 @@
 package com.highboy.gomantle.ui.state
 
-import android.app.Application
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -28,11 +27,38 @@ class GomantleViewModel() : ViewModel() {
     // shared-preferences
     private val pref = PrefRepository
 
-    val gameScreenState = GameScreenState()
-    val friendScreenState = FriendScreenState()
-    val rankScreenState = RankScreenState()
-    val myPageScreenState = MyPageScreenState()
-    val globalState = GlobalState()
+    private val globalMutableStateFlow = GlobalMutableStateFlow()
+    val globalStateFlow = GlobalStateFlow(
+        globalMutableStateFlow._uiState.asStateFlow(),
+        globalMutableStateFlow._userEmail.asStateFlow(),
+        globalMutableStateFlow._isFinished.asStateFlow(),
+        globalMutableStateFlow._isSignedIn.asStateFlow(),
+        globalMutableStateFlow._isSignInChecked.asStateFlow()
+    )
+
+    private val gameScreenMutableStateFlow = GameScreenMutableStateFlow()
+    val gameScreenStateFlow = GameScreenStateFlow(
+        gameScreenMutableStateFlow._userGuess.asStateFlow(),
+        gameScreenMutableStateFlow._wordHistory.asStateFlow(),
+        gameScreenMutableStateFlow._selectedWord.asStateFlow(),
+        gameScreenMutableStateFlow._isWordDescriptionVisible.asStateFlow(),
+        gameScreenMutableStateFlow._placeHolder.asStateFlow(),
+        gameScreenMutableStateFlow._isWarningDialogShowing.asStateFlow(),
+        gameScreenMutableStateFlow._lastPrediction.asStateFlow(),
+        gameScreenMutableStateFlow._tryCount.asStateFlow()
+    )
+    private val friendScreenMutableStateFlow = FriendScreenMutableStateFlow()
+    val friendScreenStateFlow = FriendScreenStateFlow(
+        friendScreenMutableStateFlow.tmp
+    )
+    private val rankScreenMutableStateFlow = RankScreenMutableStateFlow()
+    val rankScreenStateFlow = RankScreenStateFlow(
+        rankScreenMutableStateFlow.tmp
+    )
+    private val myPageScreenMutableStateFlow = MyPageScreenMutableStateFlow()
+    val myPageScreenStateFlow = MyPageScreenStateFlow(
+        myPageScreenMutableStateFlow.tmp
+    )
 
     // Infinite Scroll
     private val _isLoading = MutableStateFlow(false)
@@ -46,16 +72,13 @@ class GomantleViewModel() : ViewModel() {
 
     private var pageCount = 1
 
-    private val _userEmail = MutableStateFlow("")
-    val userEmail: StateFlow<String> = _userEmail.asStateFlow()
-
     fun updateLastPrediction(word: String) {
-        gameScreenState._lastPrediction.update { word }
-        pref.putString(GlobalConstants.LAST_PREDICTION, lastPrediction.value)
+        gameScreenMutableStateFlow._lastPrediction.update { word }
+        pref.putString(GlobalConstants.LAST_PREDICTION, gameScreenStateFlow.lastPrediction.value)
     }
 
     fun updateWarningDialogVisibility(visibility: Boolean) {
-        _isWarningDialogShowing.update { visibility }
+        gameScreenMutableStateFlow._isWarningDialogShowing.update { visibility }
     }
     fun loadMore() {
         viewModelScope.launch {
@@ -84,45 +107,41 @@ class GomantleViewModel() : ViewModel() {
     // game
 
     fun showWordDescription(word: String) {
-        _isWordDescriptionVisible.update { true }
-        _selectedWord.update { word }
+        gameScreenMutableStateFlow._isWordDescriptionVisible.update { true }
+        gameScreenMutableStateFlow._selectedWord.update { word }
     }
 
     fun getDescription(): String {
-        return selectedWord.value
+        return gameScreenStateFlow.selectedWord.value
     }
 
     fun hideWordDescription() {
-        _isWordDescriptionVisible.update { false }
+        gameScreenMutableStateFlow._isWordDescriptionVisible.update { false }
     }
 
     fun updateCurrentView(viewType: ViewType) {
-        _uiState.update {
-            it.copy(
-                currentViewType = viewType
-            )
-        }
+        globalMutableStateFlow._uiState.update { viewType }
     }
 
     fun updateUserGuessTextField(guessedWord: String) {
-        _userGuess.update {
+        gameScreenMutableStateFlow._userGuess.update {
             guessedWord
         }
     }
 
     // 단어 입력 후 Done을 눌렀을 때.
     fun checkUserGuess() {
-        if(userGuess.value == "") {
+        if(gameScreenStateFlow.userGuess.value == "") {
             viewModelScope.launch {
-                _placeHolder.update { "Please enter at least one word!" }
+                gameScreenMutableStateFlow._placeHolder.update { "Please enter at least one word!" }
                 delay(1500)
-                _placeHolder.update { "Guess the word!" }
+                gameScreenMutableStateFlow._placeHolder.update { "Guess the word!" }
             }
             return
         }
         lateinit var guessedWord: Word
         viewModelScope.launch {
-            guessedWord = Word(userGuess.value, getWordSimilarity(userGuess.value))
+            guessedWord = Word(gameScreenStateFlow.userGuess.value, getWordSimilarity(userGuess.value))
             Log.e("checkUserGuess", "${guessedWord.word} ${guessedWord.similarity}")
         }
     }
@@ -131,7 +150,7 @@ class GomantleViewModel() : ViewModel() {
     private suspend fun getWordSimilarity(word: String): Float {
 
         var similarity = 0f
-        val getSimilarityRequest = GetSimilarityRequest(userGuess.value, tryCount.value)
+        val getSimilarityRequest = GetSimilarityRequest(gameScreenStateFlow.userGuess.value, gameScreenStateFlow.tryCount.value)
         viewModelScope.launch {
             val getSimilarityResponse: GetSimilarityResponse = try {
                 retrofitService.getSimilarity(getSimilarityRequest)
@@ -173,7 +192,7 @@ class GomantleViewModel() : ViewModel() {
 
     // 같은 단어를 입력했었는지 확인.
     private fun checkIfGuessedWordExists(word: Word): Boolean {
-        for(existingWord in guessedWords.value) {
+        for(existingWord in gameScreenStateFlow.wordHistory.value) {
             if(word.word == existingWord.word) return true
         }
         return false
@@ -203,21 +222,21 @@ class GomantleViewModel() : ViewModel() {
     }
 
     fun loadSharedPreferences() {
-        _userEmail.update { pref.getString(GlobalConstants.USER_EMAIL) }
-        _serverTime.update { pref.getString(GlobalConstants.SERVER_TIME) }
-        _lastPrediction.update { pref.getString(GlobalConstants.LAST_PREDICTION) }
-        _guessedWords.update { pref.getListOfWord(GlobalConstants.WORD_HISTORY) }
-        _tryCount.update { pref.getInt(GlobalConstants.TRY_COUNT) }
-        _isFinished.update { pref.getBoolean(GlobalConstants.IS_FINISHED) }
-        _isSignedIn.update { pref.getBoolean(GlobalConstants.IS_SIGNED_IN) }
+        globalMutableStateFlow._userEmail.update { pref.getString(GlobalConstants.USER_EMAIL) }
+        gameScreenMutableStateFlow._lastPrediction.update { pref.getString(GlobalConstants.LAST_PREDICTION) }
+        gameScreenMutableStateFlow._wordHistory.update { pref.getListOfWord(GlobalConstants.WORD_HISTORY) }
+        gameScreenMutableStateFlow._tryCount.update { pref.getInt(GlobalConstants.TRY_COUNT) }
+        globalMutableStateFlow._isFinished.update { pref.getBoolean(GlobalConstants.IS_FINISHED) }
+        globalMutableStateFlow._isSignedIn.update {
+            (pref.getString(GlobalConstants.USER_EMAIL) != "") && (pref.getString(GlobalConstants.USER_EMAIL) != "guest")
+        }
     }
 
-    fun updateIsSignedIn(): Boolean {
-        return isSignedIn.value
+    fun updateIsSignedIn(signedIn: Boolean) {
+        globalMutableStateFlow._isSignedIn.update { signedIn }
     }
 
-    fun updateIsSignInChecked(): Boolean {
-        val isSignInChecked = pref.getString(GlobalConstants.USER_EMAIL)
-        return (isSignInChecked != "")
+    fun updateIsSignInChecked(checked: Boolean) {
+
     }
 }

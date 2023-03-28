@@ -42,8 +42,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.e("activity", "GomantleMainActivity")
+
         createSharedPreferences()
-        PrefRepository.setContext(applicationContext)
+
         setContent {
             GomantleTheme {
                 // A surface container using the 'background' color from the theme
@@ -51,8 +52,22 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
+                    viewModel.loadSharedPreferences()
                     GomantleApp(
-                        startSignIn = { startSignIn() }
+                        globalStateFlow = viewModel.globalStateFlow,
+                        gameScreenStateFlow = viewModel.gameScreenStateFlow,
+                        friendScreenStateFlow = viewModel.friendScreenStateFlow,
+                        rankScreenStateFlow = viewModel.rankScreenStateFlow,
+                        myPageScreenStateFlow = viewModel.myPageScreenStateFlow,
+                        startSignIn = {
+                            startSignIn()
+                        },
+                        updateIsSignInChecked = {
+                            viewModel.updateIsSignInChecked(it)
+                        },
+                        updateCurrentView = {
+                            viewModel.updateCurrentView(it)
+                        }
                     )
                 }
             }
@@ -127,9 +142,9 @@ class MainActivity : ComponentActivity() {
             Log.e("startForResult", idToken.toString())
             Log.e("startForResult", username.toString())
             Log.e("startForResult", password.toString())
-            PrefRepository.putString(GlobalConstants.USER_EMAIL, username)
 
-            GlobalVO.isSignInChecked.update { true }
+            PrefRepository.putString(GlobalConstants.USER_EMAIL, username)
+            viewModel.updateIsSignedIn(true)
         } else {
             Log.e("startForResult", "Result_NoOk")
         }
@@ -142,7 +157,6 @@ class MainActivity : ComponentActivity() {
         PrefRepository.putString(GlobalConstants.SERVER_TIME, "")
         PrefRepository.putString(GlobalConstants.LAST_PREDICTION, "")
         PrefRepository.putString(GlobalConstants.WORD_HISTORY, "")
-        PrefRepository.putBoolean(GlobalConstants.IS_SIGNED_IN, false)
         PrefRepository.putInt(GlobalConstants.TRY_COUNT, 0)
         PrefRepository.putBoolean(GlobalConstants.IS_FINISHED, false)
     }
