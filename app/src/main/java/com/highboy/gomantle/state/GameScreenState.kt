@@ -7,6 +7,9 @@ import kotlinx.coroutines.flow.asStateFlow
 
 data class GameScreenState(
     private val _userGuess: MutableStateFlow<String> = MutableStateFlow(""),
+    private val updateUser: () -> Boolean = {
+        true
+    },
     val userGuess: StateFlow<String> = _userGuess.asStateFlow(),
     private val _wordHistory: MutableStateFlow<List<Word>> = MutableStateFlow(emptyList()),
     val wordHistory: StateFlow<List<Word>> = _wordHistory.asStateFlow(),
