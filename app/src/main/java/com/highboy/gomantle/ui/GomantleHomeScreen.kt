@@ -26,7 +26,6 @@ import com.highboy.gomantle.ui.state.GomantleViewModel
 fun GomantleHomeScreen(
     gomantleUiState: GomantleUiState,
     onTabPressed: (ViewType) -> Unit,
-    modifier: Modifier,
     viewModel: GomantleViewModel,
     isSignedIn: Boolean,
     startSignIn: () -> Unit
@@ -36,8 +35,7 @@ fun GomantleHomeScreen(
             viewType = ViewType.Game,
             icon = R.drawable.stadia_controller_48px,
             text = "Game"
-        ),
-        NavigationItemContent(
+        ), NavigationItemContent(
             viewType = ViewType.Friends,
             icon = R.drawable.group_48px,
             text = "Friends"
@@ -55,7 +53,6 @@ fun GomantleHomeScreen(
         gomantleUiState = gomantleUiState,
         navigationItemContentList = navigationItemContentList,
         onTabPressed = onTabPressed,
-        modifier = modifier,
         viewModel = viewModel,
         isSignedIn = isSignedIn,
         startSignIn = startSignIn
@@ -67,7 +64,6 @@ private fun GomantleAppContent(
     gomantleUiState: GomantleUiState,
     navigationItemContentList: List<NavigationItemContent>,
     onTabPressed: (ViewType) -> Unit,
-    modifier: Modifier,
     viewModel: GomantleViewModel,
     isSignedIn: Boolean,
     startSignIn: () -> Unit

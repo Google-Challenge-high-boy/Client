@@ -1,89 +1,62 @@
 package com.highboy.gomantle.ui.state
 
+import android.app.Application
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.highboy.gomantle.GlobalConstants
+import com.highboy.gomantle.PrefRepository
 import com.highboy.gomantle.data.User
 import com.highboy.gomantle.data.ViewType
 import com.highboy.gomantle.data.Word
 import com.highboy.gomantle.network.GetSimilarityRequest
 import com.highboy.gomantle.network.GetSimilarityResponse
-import com.highboy.gomantle.network.GomantleApiService
+import com.highboy.gomantle.network.RetrofitService.Companion.retrofitService
+import com.highboy.gomantle.state.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.HTTP
 import java.io.IOException
 
 
 class GomantleViewModel() : ViewModel() {
 
+    // shared-preferences
+    private val pref = PrefRepository
 
-
-    // network
-    private val BASE_URL = "https://47fa3e21-8401-4b7e-910a-6dd2da2d6ea0.mock.pstmn.io"
-
-    private val retrofit: Retrofit = Retrofit.Builder()
-        .addConverterFactory(GsonConverterFactory.create())
-        .baseUrl(BASE_URL)
-        .build()
-
-    private val retrofitService: GomantleApiService by lazy {
-        retrofit.create(GomantleApiService::class.java)
-    }
-
-    // login
-    // 로그인 여부 확인 했나 안했나
-    private val _isSignInChecked = MutableStateFlow(false)
-    val isSignInChecked: StateFlow<Boolean> = _isSignInChecked
-
-    // 로그인 했나 안했나
-    private val _isSignedIn = MutableStateFlow(false)
-    val isSignedIn: StateFlow<Boolean> = _isSignedIn
+    val gameScreenState = GameScreenState()
+    val friendScreenState = FriendScreenState()
+    val rankScreenState = RankScreenState()
+    val myPageScreenState = MyPageScreenState()
+    val globalState = GlobalState()
 
     // Infinite Scroll
     private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     private val _isAllLoaded = MutableStateFlow(false)
-    val isAllLoaded: StateFlow<Boolean> = _isAllLoaded
+    val isAllLoaded: StateFlow<Boolean> = _isAllLoaded.asStateFlow()
 
     private val _userList = MutableStateFlow(emptyList<User>())
-    val userList: StateFlow<List<User>> = _userList
+    val userList: StateFlow<List<User>> = _userList.asStateFlow()
 
     private var pageCount = 1
 
-    // UI
-    // Game / Friend / Rank / MyPage 구분
-    private val _uiState = MutableStateFlow(GomantleUiState())
-    val uiState: StateFlow<GomantleUiState> = _uiState
+    private val _userEmail = MutableStateFlow("")
+    val userEmail: StateFlow<String> = _userEmail.asStateFlow()
 
-    // 지금까지 입력한 단어 히스토리
-    private val _guessedWords = MutableStateFlow(emptyList<Word>())
-    val guessedWords: StateFlow<List<Word>> = _guessedWords
+    fun updateLastPrediction(word: String) {
+        gameScreenState._lastPrediction.update { word }
+        pref.putString(GlobalConstants.LAST_PREDICTION, lastPrediction.value)
+    }
 
-    // 현재 입력중인 단어
-    private val _userGuess = MutableStateFlow("")
-    val userGuess: StateFlow<String> = _userGuess
-
-    // 히스토리에서 선택한 단어
-    private val _selectedWord = MutableStateFlow("")
-    val selectedWord: StateFlow<String> = _selectedWord
-
-    // 단어의 설명 뷰가 보이나 안보이나
-    private val _isWordDescriptionVisible = MutableStateFlow(false)
-    val isWordDescriptionVisible: StateFlow<Boolean> = _isWordDescriptionVisible
-
-    private val _placeHolder = MutableStateFlow("Guess the word!")
-    val placeHolder: StateFlow<String> = _placeHolder
-
+    fun updateWarningDialogVisibility(visibility: Boolean) {
+        _isWarningDialogShowing.update { visibility }
+    }
     fun loadMore() {
         viewModelScope.launch {
 
@@ -107,8 +80,6 @@ class GomantleViewModel() : ViewModel() {
     init {
 
     }
-
-
 
     // game
 
@@ -144,7 +115,7 @@ class GomantleViewModel() : ViewModel() {
         if(userGuess.value == "") {
             viewModelScope.launch {
                 _placeHolder.update { "Please enter at least one word!" }
-                delay(3000)
+                delay(1500)
                 _placeHolder.update { "Guess the word!" }
             }
             return
@@ -152,9 +123,6 @@ class GomantleViewModel() : ViewModel() {
         lateinit var guessedWord: Word
         viewModelScope.launch {
             guessedWord = Word(userGuess.value, getWordSimilarity(userGuess.value))
-            if(!checkIfGuessedWordExists(guessedWord)) {
-                addGuessedWord(guessedWord.word, guessedWord.similarity)
-            }
             Log.e("checkUserGuess", "${guessedWord.word} ${guessedWord.similarity}")
         }
     }
@@ -163,7 +131,7 @@ class GomantleViewModel() : ViewModel() {
     private suspend fun getWordSimilarity(word: String): Float {
 
         var similarity = 0f
-        val getSimilarityRequest = GetSimilarityRequest(userGuess.value, GlobalConstants.TRY_COUNT)
+        val getSimilarityRequest = GetSimilarityRequest(userGuess.value, tryCount.value)
         viewModelScope.launch {
             val getSimilarityResponse: GetSimilarityResponse = try {
                 retrofitService.getSimilarity(getSimilarityRequest)
@@ -177,13 +145,24 @@ class GomantleViewModel() : ViewModel() {
             similarity = getSimilarityResponse.similarity
             when(similarity) {
                 200f -> {
-
+                    updateWarningDialogVisibility(true)
                 }
                 100f -> {
-
+                    updateLastPrediction(word)
+                    if(!checkIfGuessedWordExists(Word(word, similarity))) {
+                        addGuessedWord(word, similarity)
+                    }
+                    pref.putListOfWord(GlobalConstants.WORD_HISTORY, guessedWords.value)
+                    pref.putInt(GlobalConstants.TRY_COUNT, tryCount.value)
                 }
                 else -> {
+                    updateLastPrediction(word)
                     similarity = getSimilarityResponse.similarity
+                    if(!checkIfGuessedWordExists(Word(word, similarity))) {
+                        addGuessedWord(word, similarity)
+                    }
+                    pref.putListOfWord(GlobalConstants.WORD_HISTORY, guessedWords.value)
+                    pref.putInt(GlobalConstants.TRY_COUNT, tryCount.value)
                 }
             }
             Log.e("similarity", "${getSimilarityResponse.similarity}")
@@ -202,8 +181,8 @@ class GomantleViewModel() : ViewModel() {
 
     // 단어가 존재하지 않으면 단어를 추가.
     private fun addGuessedWord(guessedWord: String, similarity: Float) {
-        _guessedWords.update {
-            it + Word(guessedWord, similarity)
+        _guessedWords.update { guessedWords ->
+            (guessedWords + Word(guessedWord, similarity)).sortedBy { it.similarity }
         }
     }
 
@@ -223,4 +202,22 @@ class GomantleViewModel() : ViewModel() {
         }
     }
 
+    fun loadSharedPreferences() {
+        _userEmail.update { pref.getString(GlobalConstants.USER_EMAIL) }
+        _serverTime.update { pref.getString(GlobalConstants.SERVER_TIME) }
+        _lastPrediction.update { pref.getString(GlobalConstants.LAST_PREDICTION) }
+        _guessedWords.update { pref.getListOfWord(GlobalConstants.WORD_HISTORY) }
+        _tryCount.update { pref.getInt(GlobalConstants.TRY_COUNT) }
+        _isFinished.update { pref.getBoolean(GlobalConstants.IS_FINISHED) }
+        _isSignedIn.update { pref.getBoolean(GlobalConstants.IS_SIGNED_IN) }
+    }
+
+    fun updateIsSignedIn(): Boolean {
+        return isSignedIn.value
+    }
+
+    fun updateIsSignInChecked(): Boolean {
+        val isSignInChecked = pref.getString(GlobalConstants.USER_EMAIL)
+        return (isSignInChecked != "")
+    }
 }

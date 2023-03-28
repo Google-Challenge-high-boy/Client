@@ -33,7 +33,7 @@ fun GomantleStartScreen(
         )
         Text(
             text = "Sign In",
-            fontSize = 20.sp,
+            fontSize = 40.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier
                 .padding(40.dp)
@@ -43,7 +43,7 @@ fun GomantleStartScreen(
         )
         Text(
             text = "Play as Guest",
-            fontSize = 20.sp,
+            fontSize = 40.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier
                 .padding(40.dp)

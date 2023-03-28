@@ -1,9 +1,12 @@
 package com.highboy.gomantle
 
 import android.app.Activity
+import android.app.Application
 import android.content.ContentValues.TAG
 import android.content.IntentSender
+import android.content.SharedPreferences
 import android.os.Bundle
+import android.provider.Settings.Global
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -16,6 +19,7 @@ import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.GraphicsLayerScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
@@ -32,14 +36,14 @@ class MainActivity : ComponentActivity() {
     private lateinit var oneTapClient: SignInClient
     private lateinit var signInRequest: BeginSignInRequest
     private lateinit var signUpRequest: BeginSignInRequest
-    private val isSignInChecked = MutableStateFlow(false)
-    private val isSignedIn = MutableStateFlow(false)
+
+    private val viewModel = GomantleViewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.e("activity", "GomantleMainActivity")
-
-
+        createSharedPreferences()
+        PrefRepository.setContext(applicationContext)
         setContent {
             GomantleTheme {
                 // A surface container using the 'background' color from the theme
@@ -47,7 +51,9 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    GomantleApp(startSignIn = this::startSignIn, isSignInChecked = isSignInChecked.collectAsState().value, updateIsSignInChecked = { updateIsSignInChecked(it) }, isSignedIn = isSignedIn.collectAsState().value)
+                    GomantleApp(
+                        startSignIn = { startSignIn() }
+                    )
                 }
             }
         }
@@ -121,32 +127,23 @@ class MainActivity : ComponentActivity() {
             Log.e("startForResult", idToken.toString())
             Log.e("startForResult", username.toString())
             Log.e("startForResult", password.toString())
-            updateIsSignInChecked(true)
-            updateIsSignedIn(true)
+            PrefRepository.putString(GlobalConstants.USER_EMAIL, username)
+
+            GlobalVO.isSignInChecked.update { true }
         } else {
             Log.e("startForResult", "Result_NoOk")
         }
     }
 
-    private fun updateIsSignInChecked(checked: Boolean) {
-        isSignInChecked.update { checked }
-    }
+    private fun createSharedPreferences() {
+        if(PrefRepository.checkPrefExist()) return
 
-    private fun updateIsSignedIn(signedIn: Boolean) {
-        isSignedIn.update { signedIn }
+        PrefRepository.putString(GlobalConstants.USER_EMAIL, "")
+        PrefRepository.putString(GlobalConstants.SERVER_TIME, "")
+        PrefRepository.putString(GlobalConstants.LAST_PREDICTION, "")
+        PrefRepository.putString(GlobalConstants.WORD_HISTORY, "")
+        PrefRepository.putBoolean(GlobalConstants.IS_SIGNED_IN, false)
+        PrefRepository.putInt(GlobalConstants.TRY_COUNT, 0)
+        PrefRepository.putBoolean(GlobalConstants.IS_FINISHED, false)
     }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        setContent {
-            SavePreferences()
-        }
-    }
-}
-
-@Composable
-fun SavePreferences() {
-    val viewModel: GomantleViewModel = viewModel()
-    val prefRepository = PrefRepository(LocalContext.current)
-    prefRepository.putListOfString(GlobalConstants.PREF_WORD_HISTORY, viewModel.guessedWords.collectAsState().value.map { it.word } )
 }
