@@ -13,6 +13,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
@@ -37,13 +38,14 @@ class MainActivity : ComponentActivity() {
     private lateinit var signInRequest: BeginSignInRequest
     private lateinit var signUpRequest: BeginSignInRequest
 
-    private val viewModel = GomantleViewModel()
+    private val viewModel: GomantleViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.e("activity", "GomantleMainActivity")
 
         createSharedPreferences()
+        viewModel.loadSharedPreferences()
 
         setContent {
             GomantleTheme {
@@ -54,19 +56,8 @@ class MainActivity : ComponentActivity() {
                 ) {
                     viewModel.loadSharedPreferences()
                     GomantleApp(
-                        globalStateFlow = viewModel.globalStateFlow,
-                        gameScreenStateFlow = viewModel.gameScreenStateFlow,
-                        friendScreenStateFlow = viewModel.friendScreenStateFlow,
-                        rankScreenStateFlow = viewModel.rankScreenStateFlow,
-                        myPageScreenStateFlow = viewModel.myPageScreenStateFlow,
                         startSignIn = {
                             startSignIn()
-                        },
-                        updateIsSignInChecked = {
-                            viewModel.updateIsSignInChecked(it)
-                        },
-                        updateCurrentView = {
-                            viewModel.updateCurrentView(it)
                         }
                     )
                 }
@@ -107,11 +98,12 @@ class MainActivity : ComponentActivity() {
                 } catch (e: IntentSender.SendIntentException) {
                     Log.e(TAG, "Couldn't start One Tap UI: ${e.localizedMessage}")
                 }
+                Log.e("OneTapSignInSuccess", "Success")
             }
             .addOnFailureListener(this) { e ->
                 // No saved credentials found. Launch the One Tap sign-up flow, or
                 // do nothing and continue presenting the signed-out UI.
-
+                Log.e("OneTapSignInFailed", e.localizedMessage)
 //                oneTapClient.beginSignIn(signUpRequest)
 //                    .addOnSuccessListener(this) { result ->
 //                        try {
@@ -121,13 +113,13 @@ class MainActivity : ComponentActivity() {
 //                        } catch (e: IntentSender.SendIntentException) {
 //                            Log.e(TAG, "Couldn't start One Tap UI: ${e.localizedMessage}")
 //                        }
+//                        Log.e("OneTapSignUpSuccess", "Success")
 //                    }
 //                    .addOnFailureListener(this) { e ->
 //                        // No Google Accounts found. Just continue presenting the signed-out UI.
 //                        Log.d(TAG, e.localizedMessage)
 //                    }
 
-                Log.e(TAG, e.localizedMessage)
             }
     }
 
@@ -145,6 +137,9 @@ class MainActivity : ComponentActivity() {
 
             PrefRepository.putString(GlobalConstants.USER_EMAIL, username)
             viewModel.updateIsSignedIn(true)
+            viewModel.updateIsSignInChecked(true)
+            Log.e("startForResult", viewModel.hashCode().toString())
+
         } else {
             Log.e("startForResult", "Result_NoOk")
         }

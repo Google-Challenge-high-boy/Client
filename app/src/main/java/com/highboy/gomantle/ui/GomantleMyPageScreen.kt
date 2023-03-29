@@ -18,16 +18,13 @@ fun GomantleMyPageScreen(
         Card(
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
             modifier = Modifier
-                .padding(30.dp)
+                .fillMaxSize()
+                .padding(20.dp)
                 .height(intrinsicSize = IntrinsicSize.Min)
         ) {
-            Text(
-                "MyPage",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(100.dp)
-                    .padding(30.dp)
-            )
+            Column() {
+                
+            }
         }
     }
 }

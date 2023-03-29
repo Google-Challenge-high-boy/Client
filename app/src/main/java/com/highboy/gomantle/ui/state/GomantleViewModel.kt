@@ -1,5 +1,6 @@
 package com.highboy.gomantle.ui.state
 
+import android.provider.Settings.Global
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -72,6 +73,12 @@ class GomantleViewModel() : ViewModel() {
 
     private var pageCount = 1
 
+    // global methods
+    fun updateCurrentView(viewType: ViewType) {
+        globalMutableStateFlow._uiState.update { viewType }
+    }
+
+    // game screen methods
     fun updateLastPrediction(word: String) {
         gameScreenMutableStateFlow._lastPrediction.update { word }
         pref.putString(GlobalConstants.LAST_PREDICTION, gameScreenStateFlow.lastPrediction.value)
@@ -80,31 +87,6 @@ class GomantleViewModel() : ViewModel() {
     fun updateWarningDialogVisibility(visibility: Boolean) {
         gameScreenMutableStateFlow._isWarningDialogShowing.update { visibility }
     }
-    fun loadMore() {
-        viewModelScope.launch {
-
-            _isLoading.update { true }
-            delay(1000)
-            val items = arrayListOf<User>()
-            repeat(20) {
-                items.add(User("example@gmail.com", "User$it"))
-            }
-            _userList.update {
-                _userList.value + items
-            }
-            _isLoading.update { false }
-            pageCount++
-            if(pageCount > 10) {
-                _isAllLoaded.update { true }
-            }
-        }
-    }
-
-    init {
-
-    }
-
-    // game
 
     fun showWordDescription(word: String) {
         gameScreenMutableStateFlow._isWordDescriptionVisible.update { true }
@@ -119,17 +101,12 @@ class GomantleViewModel() : ViewModel() {
         gameScreenMutableStateFlow._isWordDescriptionVisible.update { false }
     }
 
-    fun updateCurrentView(viewType: ViewType) {
-        globalMutableStateFlow._uiState.update { viewType }
-    }
-
     fun updateUserGuessTextField(guessedWord: String) {
         gameScreenMutableStateFlow._userGuess.update {
             guessedWord
         }
     }
 
-    // 단어 입력 후 Done을 눌렀을 때.
     fun checkUserGuess() {
         if(gameScreenStateFlow.userGuess.value == "") {
             viewModelScope.launch {
@@ -141,7 +118,7 @@ class GomantleViewModel() : ViewModel() {
         }
         lateinit var guessedWord: Word
         viewModelScope.launch {
-            guessedWord = Word(gameScreenStateFlow.userGuess.value, getWordSimilarity(userGuess.value))
+            guessedWord = Word(gameScreenStateFlow.userGuess.value, getWordSimilarity(gameScreenStateFlow.userGuess.value))
             Log.e("checkUserGuess", "${guessedWord.word} ${guessedWord.similarity}")
         }
     }
@@ -171,8 +148,8 @@ class GomantleViewModel() : ViewModel() {
                     if(!checkIfGuessedWordExists(Word(word, similarity))) {
                         addGuessedWord(word, similarity)
                     }
-                    pref.putListOfWord(GlobalConstants.WORD_HISTORY, guessedWords.value)
-                    pref.putInt(GlobalConstants.TRY_COUNT, tryCount.value)
+                    pref.putListOfWord(GlobalConstants.WORD_HISTORY, gameScreenStateFlow.wordHistory.value)
+                    pref.putInt(GlobalConstants.TRY_COUNT, gameScreenStateFlow.tryCount.value)
                 }
                 else -> {
                     updateLastPrediction(word)
@@ -180,8 +157,8 @@ class GomantleViewModel() : ViewModel() {
                     if(!checkIfGuessedWordExists(Word(word, similarity))) {
                         addGuessedWord(word, similarity)
                     }
-                    pref.putListOfWord(GlobalConstants.WORD_HISTORY, guessedWords.value)
-                    pref.putInt(GlobalConstants.TRY_COUNT, tryCount.value)
+                    pref.putListOfWord(GlobalConstants.WORD_HISTORY, gameScreenStateFlow.wordHistory.value)
+                    pref.putInt(GlobalConstants.TRY_COUNT, gameScreenStateFlow.tryCount.value)
                 }
             }
             Log.e("similarity", "${getSimilarityResponse.similarity}")
@@ -200,10 +177,38 @@ class GomantleViewModel() : ViewModel() {
 
     // 단어가 존재하지 않으면 단어를 추가.
     private fun addGuessedWord(guessedWord: String, similarity: Float) {
-        _guessedWords.update { guessedWords ->
+        gameScreenMutableStateFlow._wordHistory.update { guessedWords ->
             (guessedWords + Word(guessedWord, similarity)).sortedBy { it.similarity }
         }
     }
+
+    // friend screen methods
+    fun loadMore() {
+        viewModelScope.launch {
+
+            _isLoading.update { true }
+            delay(1000)
+            val items = arrayListOf<User>()
+            repeat(20) {
+                items.add(User("example@gmail.com", "User$it"))
+            }
+            _userList.update {
+                _userList.value + items
+            }
+            _isLoading.update { false }
+            pageCount++
+            if(pageCount > 10) {
+                _isAllLoaded.update { true }
+            }
+        }
+    }
+
+    // game
+
+
+
+    // 단어 입력 후 Done을 눌렀을 때.
+
 
     private fun getUsers() {
         viewModelScope.launch {
@@ -230,6 +235,9 @@ class GomantleViewModel() : ViewModel() {
         globalMutableStateFlow._isSignedIn.update {
             (pref.getString(GlobalConstants.USER_EMAIL) != "") && (pref.getString(GlobalConstants.USER_EMAIL) != "guest")
         }
+        globalMutableStateFlow._isSignInChecked.update {
+            pref.getString(GlobalConstants.USER_EMAIL) != ""
+        }
     }
 
     fun updateIsSignedIn(signedIn: Boolean) {
@@ -237,6 +245,6 @@ class GomantleViewModel() : ViewModel() {
     }
 
     fun updateIsSignInChecked(checked: Boolean) {
-
+        globalMutableStateFlow._isSignInChecked.update { checked }
     }
 }

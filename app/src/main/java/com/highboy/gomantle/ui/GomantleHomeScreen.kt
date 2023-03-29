@@ -14,23 +14,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.highboy.gomantle.R
 import com.highboy.gomantle.data.ViewType
 import com.highboy.gomantle.state.*
-import com.highboy.gomantle.ui.state.GomantleUiState
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.highboy.gomantle.ui.state.GomantleViewModel
 
 @Composable
 fun GomantleHomeScreen(
-    globalStateFlow: GlobalStateFlow,
-    gameScreenStateFlow: GameScreenStateFlow,
-    friendScreenStateFlow: FriendScreenStateFlow,
-    rankScreenStateFlow: RankScreenStateFlow,
-    myPageScreenStateFlow: MyPageScreenStateFlow,
-    updateCurrentView: (ViewType) -> Unit,
+    viewModel: GomantleViewModel = viewModel(),
     startSignIn: () -> Unit
 ) {
     val navigationItemContentList = listOf(
@@ -53,44 +47,26 @@ fun GomantleHomeScreen(
         )
     )
     GomantleAppContent(
-        globalStateFlow = globalStateFlow,
-        gameScreenStateFlow = gameScreenStateFlow,
-        friendScreenStateFlow = friendScreenStateFlow,
-        rankScreenStateFlow = rankScreenStateFlow,
-        myPageScreenStateFlow = myPageScreenStateFlow,
         navigationItemContentList = navigationItemContentList,
-        updateCurrentView = updateCurrentView,
         startSignIn = startSignIn
     )
 }
 
 @Composable
 private fun GomantleAppContent(
-    globalStateFlow: GlobalStateFlow,
-    gameScreenStateFlow: GameScreenStateFlow,
-    friendScreenStateFlow: FriendScreenStateFlow,
-    rankScreenStateFlow: RankScreenStateFlow,
-    myPageScreenStateFlow: MyPageScreenStateFlow,
+    viewModel: GomantleViewModel = viewModel(),
     navigationItemContentList: List<NavigationItemContent>,
-    updateCurrentView: (ViewType) -> Unit,
     startSignIn: () -> Unit
 ) {
     Column() {
         GomantleOnlyContentView(
             modifier = Modifier.weight(13f),
-            globalStateFlow = globalStateFlow,
-            gameScreenStateFlow = gameScreenStateFlow,
-            friendScreenStateFlow = friendScreenStateFlow,
-            rankScreenStateFlow = rankScreenStateFlow,
-            myPageScreenStateFlow = myPageScreenStateFlow,
-            currentTab = globalStateFlow.uiState.collectAsState().value,
+            currentTab = viewModel.globalStateFlow.uiState.collectAsState().value,
             startSignIn = startSignIn
         )
         GomantleBottomNavigationBar(
             navigationItemContentList = navigationItemContentList,
-            modifier = Modifier.weight(1f),
-            updateCurrentView = updateCurrentView,
-            currentTab = globalStateFlow.uiState.collectAsState().value
+            modifier = Modifier.weight(1f)
         )
     }
 }
@@ -98,11 +74,7 @@ private fun GomantleAppContent(
 @Composable
 fun GomantleOnlyContentView(
     modifier: Modifier = Modifier,
-    globalStateFlow: GlobalStateFlow,
-    gameScreenStateFlow: GameScreenStateFlow,
-    friendScreenStateFlow: FriendScreenStateFlow,
-    rankScreenStateFlow: RankScreenStateFlow,
-    myPageScreenStateFlow: MyPageScreenStateFlow,
+    viewModel: GomantleViewModel = viewModel(),
     currentTab: ViewType,
     startSignIn: () -> Unit
 ) {
@@ -112,13 +84,11 @@ fun GomantleOnlyContentView(
     when(currentTab) {
         ViewType.Game -> {
             GomantleGameScreen(
-                modifier = modifier,
-                globalStateFlow = globalStateFlow,
-                gameScreenStateFlow = gameScreenStateFlow
+                modifier = modifier
             )
         }
         ViewType.Friends -> {
-            if(isSignedIn) {
+            if(viewModel.globalStateFlow.isSignedIn.collectAsState().value) {
                 GomantleFriendsScreen(
                     modifier = modifier
                 )
@@ -130,10 +100,9 @@ fun GomantleOnlyContentView(
             }
         }
         ViewType.Rank -> {
-            if(isSignedIn) {
+            if(viewModel.globalStateFlow.isSignedIn.collectAsState().value) {
                 GomantleRankScreen(
                     modifier = modifier,
-                    viewModel = viewModel,
                     loadMore = {
                         if(!isLoading && !isAllLoaded) {
                             viewModel.loadMore()
@@ -148,7 +117,7 @@ fun GomantleOnlyContentView(
             }
         }
         ViewType.MyPage -> {
-            if(isSignedIn) {
+            if(viewModel.globalStateFlow.isSignedIn.collectAsState().value) {
                 GomantleMyPageScreen(
                     modifier = modifier
                 )
@@ -192,10 +161,9 @@ fun RecommendSignIn(
 
 @Composable
 private fun GomantleBottomNavigationBar(
+    modifier: Modifier,
+    viewModel: GomantleViewModel = viewModel(),
     navigationItemContentList: List<NavigationItemContent>,
-    modifier: Modifier = Modifier,
-    updateCurrentView: (ViewType) -> Unit = {},
-    currentTab: ViewType
 ) {
     NavigationBar(
         modifier = modifier,
@@ -203,9 +171,9 @@ private fun GomantleBottomNavigationBar(
     ) {
         navigationItemContentList.forEachIndexed { _, navItem ->
             NavigationBarItem(
-                selected = currentTab == navItem.viewType,
+                selected = viewModel.globalStateFlow.uiState.collectAsState().value == navItem.viewType,
                 onClick = {
-                    updateCurrentView(navItem.viewType)
+                    viewModel.updateCurrentView(navItem.viewType)
                 },
                 icon = {
                     Icon(

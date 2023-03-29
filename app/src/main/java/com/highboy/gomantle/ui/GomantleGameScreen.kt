@@ -27,37 +27,25 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.web.WebView
 import com.google.accompanist.web.rememberWebViewState
 import com.highboy.gomantle.R
 import com.highboy.gomantle.data.Word
-import com.highboy.gomantle.state.GameScreenStateFlow
-import com.highboy.gomantle.state.GlobalStateFlow
 import com.highboy.gomantle.ui.state.GomantleViewModel
 
 @Composable
 fun GomantleGameScreen(
     modifier: Modifier = Modifier,
-    globalStateFlow: GlobalStateFlow,
-    gameScreenStateFlow: GameScreenStateFlow
+    viewModel: GomantleViewModel = viewModel()
 ) {
-
     Column(
         modifier = modifier
     ) {
         WordInputBox(
-            modifier = Modifier,
-            viewModel = viewModel,
-            updateText = viewModel::updateUserGuessTextField,
+            modifier = Modifier
         )
-        WordHistoryBox(
-            guessedWords = viewModel.guessedWords.collectAsState().value,
-            wordDescriptionVisibility = viewModel.isWordDescriptionVisible.collectAsState().value,
-            getDescription = viewModel::getDescription,
-            showWordDescription = viewModel::showWordDescription,
-            hideWordDescription = viewModel::hideWordDescription,
-            viewModel = viewModel
-        )
+        WordHistoryBox()
     }
 }
 
@@ -65,10 +53,9 @@ fun GomantleGameScreen(
 @Composable
 fun WordInputBox(
     modifier: Modifier,
-    viewModel: GomantleViewModel,
-    updateText: (String) -> Unit
+    viewModel: GomantleViewModel = viewModel(),
 ) {
-    val userGuess = viewModel.userGuess.collectAsState().value
+    val userGuess = viewModel.gameScreenStateFlow.userGuess.collectAsState().value
     Card(
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         modifier = Modifier
@@ -90,7 +77,7 @@ fun WordInputBox(
                         .clip(shape)
                         .clickable() {
                             viewModel.checkUserGuess()
-                            updateText("")
+                            viewModel.updateUserGuessTextField("")
                         }
                 ) {
                     Box(
@@ -107,7 +94,7 @@ fun WordInputBox(
             }
             BasicTextField(
                 value = userGuess,
-                onValueChange = { updateText(it) },
+                onValueChange = { viewModel.updateUserGuessTextField(it) },
                 modifier = Modifier
                     .height(intrinsicSize = IntrinsicSize.Min)
                     .padding(start = 20.dp, top = 20.dp, end = 52.dp, bottom = 20.dp)
@@ -118,17 +105,17 @@ fun WordInputBox(
                 keyboardActions = KeyboardActions(
                     onDone = {
                         viewModel.checkUserGuess()
-                        updateText("")
+                        viewModel.updateUserGuessTextField("")
                     }
                 ),
                 singleLine = true
             )
-            if (viewModel.userGuess.collectAsState().value.isEmpty()) {
+            if (viewModel.gameScreenStateFlow.userGuess.collectAsState().value.isEmpty()) {
                 Text(
                     modifier = Modifier
                         .height(intrinsicSize = IntrinsicSize.Min)
                         .padding(20.dp),
-                    text = viewModel.placeHolder.collectAsState().value
+                    text = viewModel.gameScreenStateFlow.placeHolder.collectAsState().value
                 )
             }
         }
@@ -138,12 +125,7 @@ fun WordInputBox(
 // 지금까지 입력한 단어들이 보여지는 박스.
 @Composable
 fun WordHistoryBox(
-    guessedWords: List<Word>,
-    wordDescriptionVisibility: Boolean,
-    getDescription: () -> String,
-    showWordDescription: (String) -> Unit,
-    hideWordDescription: () -> Unit,
-    viewModel: GomantleViewModel
+    viewModel: GomantleViewModel = viewModel()
 ) {
     Box(
         contentAlignment = Alignment.Center
@@ -156,7 +138,7 @@ fun WordHistoryBox(
                 .padding(20.dp),
         ) {
             Text(
-                text = "Last prediction: " + viewModel.lastPrediction.collectAsState().value,
+                text = "Last prediction: " + viewModel.gameScreenStateFlow.lastPrediction.collectAsState().value,
                 modifier = Modifier
                     .padding(20.dp)
             )
@@ -174,18 +156,11 @@ fun WordHistoryBox(
             }
 
             Box() {
-                GuessedWords(
-                    guessedWords = guessedWords,
-                    showWordDescription = showWordDescription
-                )
-                WordDescription(
-                    getDescription = getDescription,
-                    wordDescriptionVisibility = wordDescriptionVisibility,
-                    hideWordDescription = hideWordDescription
-                )
+                GuessedWords()
+                WordDescription()
             }
         }
-        if(viewModel.isWarningDialogShowing.collectAsState().value) {
+        if(viewModel.gameScreenStateFlow.isWarningDialogShowing.collectAsState().value) {
             WarningDialog(onDismissRequest = viewModel::updateWarningDialogVisibility)
         }
     }
@@ -194,16 +169,18 @@ fun WordHistoryBox(
 // 단어 history의 리스트
 @Composable
 fun GuessedWords(
-    guessedWords: List<Word>,
-    showWordDescription: (String) -> Unit
+    viewModel: GomantleViewModel = viewModel()
 ) {
+    val wordHistory = viewModel.gameScreenStateFlow.wordHistory.collectAsState().value
     LazyColumn(
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 20.dp)
     ) {
-        itemsIndexed(guessedWords.toList()) { _, item ->
+        itemsIndexed(wordHistory.toList()) { _, item ->
             GuessedWord(
                 word = item,
-                showWordDescription = showWordDescription
+                showWordDescription = {
+                    viewModel.showWordDescription(it)
+                }
             )
         }
     }
@@ -248,12 +225,10 @@ fun GuessedWord(
 // 개별 히스토리 단어 터치시 표시되는 설명 박스
 @Composable
 fun WordDescription(
-    getDescription: () -> String,
-    wordDescriptionVisibility: Boolean,
-    hideWordDescription: () -> Unit
+    viewModel: GomantleViewModel = viewModel()
 ) {
     AnimatedVisibility(
-        visible = wordDescriptionVisibility,
+        visible = viewModel.gameScreenStateFlow.isWordDescriptionVisible.collectAsState().value,
         modifier = Modifier,
         enter = fadeIn(),
         exit = fadeOut()
@@ -263,15 +238,15 @@ fun WordDescription(
                 .fillMaxWidth()
                 .fillMaxHeight()
                 .clickable {
-                    hideWordDescription()
+                    viewModel.hideWordDescription()
                 }
         ) {
             Text(
                 modifier = Modifier
                     .padding(20.dp),
-                text = getDescription()
+                text = viewModel.getDescription()
             )
-            WordDictionaryWebView(getDescription())
+            WordDictionaryWebView(viewModel.getDescription())
         }
     }
 }

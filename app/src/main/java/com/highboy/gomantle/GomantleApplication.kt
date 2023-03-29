@@ -10,7 +10,7 @@ class GomantleApplication : Application() {
 
     companion object {
         lateinit var instance: GomantleApplication
-        fun ApplicationContext(): Context {
+        fun applicationContext(): Context {
             return instance.applicationContext
         }
     }

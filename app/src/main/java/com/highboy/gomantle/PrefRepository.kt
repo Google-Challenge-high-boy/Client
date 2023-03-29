@@ -7,7 +7,7 @@ import com.google.gson.reflect.TypeToken
 import com.highboy.gomantle.data.Word
 
 object PrefRepository {
-    private val pref: SharedPreferences = GomantleApplication.ApplicationContext().getSharedPreferences(GlobalConstants.PREFERENCE_NAME, Context.MODE_PRIVATE)
+    private val pref: SharedPreferences = GomantleApplication.applicationContext().getSharedPreferences(GlobalConstants.PREFERENCE_NAME, Context.MODE_PRIVATE)
     private val editor = pref.edit()
     private val gson = Gson()
 
