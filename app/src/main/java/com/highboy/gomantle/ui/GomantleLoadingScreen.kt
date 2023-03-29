@@ -20,7 +20,7 @@ fun GomantleLoadingScreen(
     Box(
         modifier = Modifier
             .background(
-                color = Color(0xFFFF9632)
+                color = Color(0xFFFFFFFF)
             ),
         contentAlignment = Alignment.Center
     ) {
@@ -31,17 +31,16 @@ fun GomantleLoadingScreen(
                 text = "Gomantle",
                 fontSize = 60.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = Color(0xFFFFFFFF)
+                color = Color(0xFFFF9632)
             )
             Text(
                 text = "Guess the word!",
                 fontSize = 30.sp,
                 fontWeight = FontWeight.Medium,
-                color = Color(0xFFFFFFFF),
+                color = Color(0xFFFF9632),
                 modifier = Modifier
                     .padding(bottom = 40.dp)
             )
         }
-
     }
 }
