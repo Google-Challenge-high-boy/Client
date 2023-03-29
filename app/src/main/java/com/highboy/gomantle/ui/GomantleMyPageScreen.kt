@@ -23,25 +23,42 @@ fun GomantleMyPageScreen(
                 .height(intrinsicSize = IntrinsicSize.Min)
         ) {
             Column() {
-                
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                ) {
+                    MyInfo(modifier = Modifier.weight(1f))
+                    MyInfo(modifier = Modifier.weight(1f))
+                }
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                ) {
+                    MyInfo(modifier = Modifier.weight(1f))
+                    MyInfo(modifier = Modifier.weight(1f))
+                }
             }
         }
     }
 }
 
 @Composable
-fun MyGameHistory(
-    modifier: Modifier = Modifier
+fun MyInfo(
+    modifier: Modifier
 ) {
-    Box() {
+    Box(
+        modifier = modifier
+    ) {
         Card(
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(20.dp)
         ) {
             Text(
                 "Game History",
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(30.dp)
+                    .padding(20.dp)
             )
         }
     }

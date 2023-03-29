@@ -15,14 +15,19 @@ fun GomantleApp(
     Log.e("GomantleApp", "GomantleApp")
     Log.e("GomantleApp", viewModel.hashCode().toString())
     GomantleTheme {
-        if(!viewModel.globalStateFlow.isSignInChecked.collectAsState().value) {
-            GomantleStartScreen(
-                startSignIn = startSignIn
-            )
+        if(viewModel.globalStateFlow.isLoading.collectAsState().value) {
+            GomantleLoadingScreen()
         } else {
-            GomantleHomeScreen(
-                startSignIn = startSignIn
-            )
+            if(viewModel.globalStateFlow.isSignInChecked.collectAsState().value) {
+                GomantleHomeScreen(
+                    startSignIn = startSignIn
+                )
+            } else {
+                GomantleStartScreen(
+                    startSignIn = startSignIn
+                )
+            }
         }
+
     }
 }

@@ -46,6 +46,7 @@ class MainActivity : ComponentActivity() {
 
         createSharedPreferences()
         viewModel.loadSharedPreferences()
+        viewModel.launchLoading()
 
         setContent {
             GomantleTheme {

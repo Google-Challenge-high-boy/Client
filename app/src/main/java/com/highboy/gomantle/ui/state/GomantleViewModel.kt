@@ -30,6 +30,7 @@ class GomantleViewModel() : ViewModel() {
 
     private val globalMutableStateFlow = GlobalMutableStateFlow()
     val globalStateFlow = GlobalStateFlow(
+        globalMutableStateFlow._isLoading.asStateFlow(),
         globalMutableStateFlow._uiState.asStateFlow(),
         globalMutableStateFlow._userEmail.asStateFlow(),
         globalMutableStateFlow._isFinished.asStateFlow(),
@@ -76,6 +77,13 @@ class GomantleViewModel() : ViewModel() {
     // global methods
     fun updateCurrentView(viewType: ViewType) {
         globalMutableStateFlow._uiState.update { viewType }
+    }
+
+    fun launchLoading() {
+        viewModelScope.launch {
+            delay(5000)
+            globalMutableStateFlow._isLoading.update { false }
+        }
     }
 
     // game screen methods

@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 data class GlobalStateFlow (
+    val isLoading: StateFlow<Boolean>,
     val uiState: StateFlow<ViewType>,
     val userEmail: StateFlow<String>,
     val isFinished: StateFlow<Boolean>,
