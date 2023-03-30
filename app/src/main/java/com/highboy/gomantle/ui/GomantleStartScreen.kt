@@ -34,8 +34,6 @@ fun GomantleStartScreen(
     viewModel: GomantleViewModel = viewModel(),
     startSignIn: () -> Unit
 ) {
-    Log.e("GomantleStartScreen", viewModel.hashCode().toString())
-    Log.e("GomantleStartScreen", "GomantleStartScreen")
     Box(
         modifier = Modifier
             .fillMaxSize()

@@ -6,7 +6,18 @@ import retrofit2.http.*
 
 interface GomantleApiService {
 
-    // game
+    // Log in
+    @POST("users/signin")
+    suspend fun signIn(
+        @Body body: SignInRequest
+    ): SignInResponse
+
+    @POST("users/signup")
+    suspend fun signUp(
+        @Body body: SignUpRequest
+    ): SignUpResponse
+
+    // Game
 
     @Headers("userId: ${GlobalConstants.USER_EMAIL}")
     @POST("gomantle/wrong")

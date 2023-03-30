@@ -12,8 +12,6 @@ fun GomantleApp(
     viewModel: GomantleViewModel = viewModel(),
     startSignIn: () -> Unit,
 ) {
-    Log.e("GomantleApp", "GomantleApp")
-    Log.e("GomantleApp", viewModel.hashCode().toString())
     GomantleTheme {
         if(viewModel.globalStateFlow.isLoading.collectAsState().value) {
             GomantleLoadingScreen()
@@ -23,9 +21,13 @@ fun GomantleApp(
                     startSignIn = startSignIn
                 )
             } else {
-                GomantleStartScreen(
-                    startSignIn = startSignIn
-                )
+                if(viewModel.globalStateFlow.isSigningUp.collectAsState().value) {
+                    GomantleSignUpScreen()
+                } else {
+                    GomantleStartScreen(
+                        startSignIn = startSignIn
+                    )
+                }
             }
         }
 

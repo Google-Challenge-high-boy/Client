@@ -46,7 +46,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.e("activity", "GomantleMainActivity")
 
         createSharedPreferences()
         viewModel.loadSharedPreferences()
@@ -60,7 +59,6 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val backgroundColor = MaterialTheme.colorScheme.background
-                    Log.e("backgroundColor", MaterialTheme.colorScheme.toString())
                     val systemUiController = rememberSystemUiController()
                     val useDarkIcons = !isSystemInDarkTheme()
 
@@ -73,7 +71,6 @@ class MainActivity : ComponentActivity() {
                         )
                         onDispose {}
                     }
-                    viewModel.loadSharedPreferences()
                     GomantleApp(
                         startSignIn = {
                             startSignIn()
@@ -155,8 +152,7 @@ class MainActivity : ComponentActivity() {
             Log.e("startForResult", password.toString())
 
             PrefRepository.putString(GlobalConstants.USER_EMAIL, username)
-            viewModel.updateIsSignedIn(true)
-            viewModel.updateIsSignInChecked(true)
+            viewModel.signIn()
             Log.e("startForResult", viewModel.hashCode().toString())
 
         } else {

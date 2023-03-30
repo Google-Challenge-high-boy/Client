@@ -1,5 +1,7 @@
 package com.highboy.gomantle.ui
 
+import android.app.DatePickerDialog
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -9,6 +11,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -16,10 +19,11 @@ import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.highboy.gomantle.UserProfileActivity
 import com.highboy.gomantle.data.User
-import com.highboy.gomantle.data.ViewType
 import com.highboy.gomantle.ui.state.GomantleViewModel
 import kotlinx.coroutines.flow.distinctUntilChanged
+import java.util.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GomantleRankScreen(
     paddingValues: PaddingValues,
@@ -35,22 +39,57 @@ fun GomantleRankScreen(
         modifier = Modifier
             .padding(paddingValues),
     ) {
-        LazyColumn(
-            modifier = Modifier
-                .padding(bottom = 12.dp),
-            state = listState
-        ) {
-            itemsIndexed(users) { idx, user ->
-                UserListItem(user = user, idx = idx) {
-                    startActivity(context, UserProfileActivity.newIntent(context, it), null)
+        Column {
+            GomantleDatePickerDialog()
+            LazyColumn(
+                modifier = Modifier
+                    .padding(bottom = 12.dp),
+                state = listState
+            ) {
+                itemsIndexed(users) { idx, user ->
+                    UserListItem(user = user, idx = idx) {
+                        startActivity(context, UserProfileActivity.newIntent(context, it), null)
+                    }
                 }
             }
         }
     }
 
-
     InfiniteListHandler(listState) {
         loadMore()
+    }
+}
+@ExperimentalMaterial3Api
+@Composable
+fun GomantleDatePickerDialog(
+    viewModel: GomantleViewModel = viewModel()
+) {
+    val calendar = Calendar.getInstance()
+    val context = LocalContext.current
+    val datePickerDialog = DatePickerDialog(
+        context,
+        {
+            _, year, month, dayOfMonth ->
+            viewModel.updateSelectedDate(year, month, dayOfMonth)
+            Log.e("datepicker", "$year, $month, $dayOfMonth")
+//            viewModel.getRank(year, month, dayOfMonth)
+        },
+        calendar.get(Calendar.YEAR),
+        calendar.get(Calendar.MONTH),
+        calendar.get(Calendar.DAY_OF_MONTH)
+    )
+    Box(
+        modifier = Modifier
+            .fillMaxWidth(),
+        contentAlignment = Alignment.Center
+    ) {
+        Button(
+            onClick = {
+                datePickerDialog.show()
+            }
+        ) {
+            Text(viewModel.rankScreenStateFlow.selectedDate.collectAsState().value)
+        }
     }
 }
 

@@ -1,6 +1,5 @@
 package com.highboy.gomantle.ui.state
 
-import android.provider.Settings.Global
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -9,10 +8,7 @@ import com.highboy.gomantle.PrefRepository
 import com.highboy.gomantle.data.User
 import com.highboy.gomantle.data.ViewType
 import com.highboy.gomantle.data.Word
-import com.highboy.gomantle.network.GetRankRequest
-import com.highboy.gomantle.network.GetRankResponse
-import com.highboy.gomantle.network.GetSimilarityRequest
-import com.highboy.gomantle.network.GetSimilarityResponse
+import com.highboy.gomantle.network.*
 import com.highboy.gomantle.network.RetrofitService.Companion.retrofitService
 import com.highboy.gomantle.state.*
 import kotlinx.coroutines.delay
@@ -31,6 +27,10 @@ class GomantleViewModel() : ViewModel() {
 
     private val globalMutableStateFlow = GlobalMutableStateFlow()
     val globalStateFlow = GlobalStateFlow(
+        globalMutableStateFlow._date.asStateFlow(),
+        globalMutableStateFlow._userName.asStateFlow(),
+        globalMutableStateFlow._userId.asStateFlow(),
+        globalMutableStateFlow._isSigningUp.asStateFlow(),
         globalMutableStateFlow._isLoading.asStateFlow(),
         globalMutableStateFlow._uiState.asStateFlow(),
         globalMutableStateFlow._userEmail.asStateFlow(),
@@ -58,7 +58,9 @@ class GomantleViewModel() : ViewModel() {
 
     private val rankScreenMutableStateFlow = RankScreenMutableStateFlow()
     val rankScreenStateFlow = RankScreenStateFlow(
-        rankScreenMutableStateFlow._selectedDate.asStateFlow(),
+        rankScreenMutableStateFlow._selectedYear.asStateFlow(),
+        rankScreenMutableStateFlow._selectedMonth.asStateFlow(),
+        rankScreenMutableStateFlow._selectedDayOfMonth.asStateFlow(),
         rankScreenMutableStateFlow._myRank.asStateFlow(),
         rankScreenMutableStateFlow._allRank.asStateFlow()
     )
@@ -83,6 +85,51 @@ class GomantleViewModel() : ViewModel() {
     /**
      * Global
      */
+
+    fun signIn() {
+        val signInRequest = SignInRequest(GlobalConstants.USER_EMAIL)
+        viewModelScope.launch {
+            val signInResponse: SignInResponse = try {
+                retrofitService.signIn(signInRequest)
+            } catch(e: IOException) {
+                e.printStackTrace()
+                SignInResponse(300, null, null)
+            } catch(e: HttpException) {
+                e.printStackTrace()
+                SignInResponse(300, null, null)
+            }
+            if(signInResponse.status == 200) {
+                globalMutableStateFlow._date.update { signInResponse.date ?: ""}
+                globalMutableStateFlow._userId.update { signInResponse.User?.userid ?: -1}
+                globalMutableStateFlow._userName.update { signInResponse.User?.name ?: "" }
+                globalMutableStateFlow._isSignInChecked.update { true }
+                globalMutableStateFlow._isSignedIn.update { true }
+            } else {
+                globalMutableStateFlow._isSigningUp.update { true }
+            }
+        }
+    }
+
+    fun signUp() {
+        val signUpRequest = SignUpRequest(GlobalConstants.USER_EMAIL, "")
+        viewModelScope.launch {
+            val signUpResponse: SignUpResponse = try {
+                retrofitService.signUp(signUpRequest)
+            } catch(e: IOException) {
+                e.printStackTrace()
+                SignUpResponse(400)
+            } catch(e: HttpException) {
+                e.printStackTrace()
+                SignUpResponse(400)
+            }
+            if(signUpResponse.status == 200) {
+                globalMutableStateFlow._isSigningUp.update { false }
+            } else {
+                globalMutableStateFlow._isSigningUp.update { false }
+                globalMutableStateFlow._isSignInChecked.update { false }
+            }
+        }
+    }
 
     fun updateCurrentView(viewType: ViewType) {
         globalMutableStateFlow._uiState.update { viewType }
@@ -230,7 +277,6 @@ class GomantleViewModel() : ViewModel() {
 
     // 단어 입력 후 Done을 눌렀을 때.
 
-
     private fun getUsers() {
         viewModelScope.launch {
 //            _userList.update {
@@ -252,7 +298,8 @@ class GomantleViewModel() : ViewModel() {
      * Rank Screen
      */
     fun loadRankInfo() {
-        val getRankRequest = GetRankRequest(rankScreenStateFlow.selectedDate.value)
+
+        val getRankRequest = GetRankRequest("")
         viewModelScope.launch {
             val getRankResponse: GetRankResponse = try {
                 retrofitService.getRank(getRankRequest)
@@ -268,7 +315,12 @@ class GomantleViewModel() : ViewModel() {
         }
     }
 
+    fun updateSelectedDate(year: Int, month: Int, dayOfMonth: Int) {
 
+        rankScreenMutableStateFlow._selectedYear.update { year }
+        rankScreenMutableStateFlow._selectedMonth.update { month }
+        rankScreenMutableStateFlow._selectedDayOfMonth.update { dayOfMonth }
+    }
     /**
      * MyPage Screen
      */

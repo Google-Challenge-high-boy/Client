@@ -14,9 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun GomantleLoadingScreen(
-
-) {
+fun GomantleLoadingScreen() {
     Box(
         modifier = Modifier
             .background(

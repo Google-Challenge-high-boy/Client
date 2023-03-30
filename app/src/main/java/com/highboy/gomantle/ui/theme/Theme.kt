@@ -84,7 +84,6 @@ fun GomantleTheme(
     } else {
         DarkColors
     }
-    Log.e("GomantleTheme", colors.toString())
     MaterialTheme(
         colorScheme = colors,
         content = content,
