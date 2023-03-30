@@ -1,4 +1,5 @@
 package com.highboy.gomantle.network
 
-class FollowUpResponse {
-}
+data class FollowUpResponse (
+    val result: Boolean
+)

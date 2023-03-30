@@ -7,19 +7,18 @@ import retrofit2.http.*
 interface GomantleApiService {
 
     // Log in
-    @POST("users/signin")
+    @POST("v1/users/signin")
     suspend fun signIn(
         @Body body: SignInRequest
     ): SignInResponse
 
-    @POST("users/signup")
+    @POST("v1/users/signup")
     suspend fun signUp(
         @Body body: SignUpRequest
     ): SignUpResponse
 
     // Game
 
-    @Headers("userId: ${GlobalConstants.USER_EMAIL}")
     @POST("gomantle/wrong")
     suspend fun getSimilarity(
         @Body body: GetSimilarityRequest
@@ -30,16 +29,16 @@ interface GomantleApiService {
 
     // friend
 
-//    @Headers("userId: ${GlobalConstants.USER_EMAIL}")
-//    @POST("friends")
-//    suspend fun followUp(
-//        @Body body: FollowUpRequest
-//    ): FollowUpResponse
-//
-//    @Headers("userId: ${GlobalConstants.USER_EMAIL}")
-//    @GET("friends")
-//    suspend fun getFriendInfo(
-//    ): GetFriendInfoResponse
+    @POST("friends")
+    suspend fun followUp(
+        @HeaderMap headerMap: Map<String, Long>,
+        @Body body: FollowUpRequest
+    ): FollowUpResponse
+
+    @GET("friends")
+    suspend fun getFriends(
+        @HeaderMap headerMap: Map<String, Long>,
+    ): List<GetFriendsResponse>
 
     // rank
 

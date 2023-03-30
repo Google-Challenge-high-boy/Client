@@ -152,6 +152,7 @@ class MainActivity : ComponentActivity() {
             Log.e("startForResult", password.toString())
 
             PrefRepository.putString(GlobalConstants.USER_EMAIL, username)
+            viewModel.updateEmail(username)
             viewModel.signIn()
             Log.e("startForResult", viewModel.hashCode().toString())
 

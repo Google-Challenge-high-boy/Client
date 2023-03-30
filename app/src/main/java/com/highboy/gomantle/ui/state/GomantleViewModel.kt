@@ -53,7 +53,8 @@ class GomantleViewModel() : ViewModel() {
 
     private val friendScreenMutableStateFlow = FriendScreenMutableStateFlow()
     val friendScreenStateFlow = FriendScreenStateFlow(
-        friendScreenMutableStateFlow.tmp
+        friendScreenMutableStateFlow._friendsEmailList.asStateFlow(),
+        friendScreenMutableStateFlow._friendsIdList.asStateFlow()
     )
 
     private val rankScreenMutableStateFlow = RankScreenMutableStateFlow()
@@ -87,7 +88,7 @@ class GomantleViewModel() : ViewModel() {
      */
 
     fun signIn() {
-        val signInRequest = SignInRequest(GlobalConstants.USER_EMAIL)
+        val signInRequest = SignInRequest(pref.getString(GlobalConstants.USER_EMAIL))
         viewModelScope.launch {
             val signInResponse: SignInResponse = try {
                 retrofitService.signIn(signInRequest)
@@ -98,10 +99,13 @@ class GomantleViewModel() : ViewModel() {
                 e.printStackTrace()
                 SignInResponse(300, null, null)
             }
+            Log.e("signIn", signInResponse.status.toString())
+            Log.e("signIn", signInResponse.date.toString())
+            Log.e("signIn", signInResponse.user.toString())
             if(signInResponse.status == 200) {
                 globalMutableStateFlow._date.update { signInResponse.date ?: ""}
-                globalMutableStateFlow._userId.update { signInResponse.User?.userid ?: -1}
-                globalMutableStateFlow._userName.update { signInResponse.User?.name ?: "" }
+                globalMutableStateFlow._userId.update { signInResponse.user?.id ?: -1}
+                globalMutableStateFlow._userName.update { signInResponse.user?.name ?: "" }
                 globalMutableStateFlow._isSignInChecked.update { true }
                 globalMutableStateFlow._isSignedIn.update { true }
             } else {
@@ -110,8 +114,8 @@ class GomantleViewModel() : ViewModel() {
         }
     }
 
-    fun signUp() {
-        val signUpRequest = SignUpRequest(GlobalConstants.USER_EMAIL, "")
+    fun signUp(nickname: String) {
+        val signUpRequest = SignUpRequest(pref.getString(GlobalConstants.USER_EMAIL), nickname)
         viewModelScope.launch {
             val signUpResponse: SignUpResponse = try {
                 retrofitService.signUp(signUpRequest)
@@ -122,6 +126,7 @@ class GomantleViewModel() : ViewModel() {
                 e.printStackTrace()
                 SignUpResponse(400)
             }
+            Log.e("signUp", signUpResponse.status.toString())
             if(signUpResponse.status == 200) {
                 globalMutableStateFlow._isSigningUp.update { false }
             } else {
@@ -140,6 +145,10 @@ class GomantleViewModel() : ViewModel() {
             delay(5000)
             globalMutableStateFlow._isLoading.update { false }
         }
+    }
+
+    fun updateEmail(email: String) {
+        globalMutableStateFlow._userEmail.update { email }
     }
 
     /**
@@ -273,23 +282,34 @@ class GomantleViewModel() : ViewModel() {
      * Friend Screen
      */
 
-
+    fun followUp(userId: Long) {
+        val followUpRequest = FollowUpRequest(userId)
+        viewModelScope.launch {
+            val followUpResponse = try {
+                retrofitService.followUp(mapOf<String, Long>("userId" to globalStateFlow.userId.value), followUpRequest)
+            } catch(e: IOException) {
+                e.printStackTrace()
+                FollowUpResponse(false)
+            } catch(e: HttpException) {
+                e.printStackTrace()
+                FollowUpResponse(false)
+            }
+        }
+    }
 
     // 단어 입력 후 Done을 눌렀을 때.
 
-    private fun getUsers() {
+    private fun getFriends() {
         viewModelScope.launch {
-//            _userList.update {
-//                try {
-//                    retrofitService.getUsers()
-//                } catch(e: IOException) {
-//                    Log.d("", "")
-//                    emptyList()
-//                } catch(e: HttpException) {
-//                    Log.d("", "")
-//                    emptyList()
-//                }
-//            }
+            val getFriendsResponse = try {
+                retrofitService.getFriends(mapOf("userId" to globalStateFlow.userId.value))
+            } catch(e: IOException) {
+                e.printStackTrace()
+                listOf<GetFriendsResponse>()
+            } catch(e: HttpException) {
+                e.printStackTrace()
+                listOf<GetFriendsResponse>()
+            }
         }
     }
 
@@ -316,7 +336,6 @@ class GomantleViewModel() : ViewModel() {
     }
 
     fun updateSelectedDate(year: Int, month: Int, dayOfMonth: Int) {
-
         rankScreenMutableStateFlow._selectedYear.update { year }
         rankScreenMutableStateFlow._selectedMonth.update { month }
         rankScreenMutableStateFlow._selectedDayOfMonth.update { dayOfMonth }
@@ -332,6 +351,9 @@ class GomantleViewModel() : ViewModel() {
         globalMutableStateFlow._isFinished.update { pref.getBoolean(GlobalConstants.IS_FINISHED) }
         globalMutableStateFlow._isSignedIn.update {
             (pref.getString(GlobalConstants.USER_EMAIL) != "") && (pref.getString(GlobalConstants.USER_EMAIL) != "guest")
+        }
+        if(globalMutableStateFlow._isSignedIn.value) {
+            signIn()
         }
         globalMutableStateFlow._isSignInChecked.update {
             pref.getString(GlobalConstants.USER_EMAIL) != ""

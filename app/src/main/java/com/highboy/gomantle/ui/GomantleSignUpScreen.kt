@@ -31,7 +31,7 @@ fun GomantleSignUpScreen(
                         nickname = it
                     })
                 Button(
-                    onClick = { viewModel.signUp() }
+                    onClick = { viewModel.signUp(nickname) }
                 ) {
                     Text(
                         text = "Sign Up"

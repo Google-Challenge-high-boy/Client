@@ -88,7 +88,7 @@ fun GomantleDatePickerDialog(
                 datePickerDialog.show()
             }
         ) {
-            Text(viewModel.rankScreenStateFlow.selectedDate.collectAsState().value)
+            Text("")
         }
     }
 }

@@ -3,15 +3,19 @@ package com.highboy.gomantle.ui
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.highboy.gomantle.ui.state.GomantleViewModel
 
 @Composable
 fun GomantleMyPageScreen(
-    paddingValues: PaddingValues
+    paddingValues: PaddingValues,
+    viewModel: GomantleViewModel = viewModel()
 ) {
     Surface(
         modifier = Modifier
@@ -26,20 +30,8 @@ fun GomantleMyPageScreen(
                     .height(intrinsicSize = IntrinsicSize.Min)
             ) {
                 Column() {
-                    Row(
-                        modifier = Modifier
-                            .weight(1f)
-                    ) {
-                        MyInfo(modifier = Modifier.weight(1f))
-                        MyInfo(modifier = Modifier.weight(1f))
-                    }
-                    Row(
-                        modifier = Modifier
-                            .weight(1f)
-                    ) {
-                        MyInfo(modifier = Modifier.weight(1f))
-                        MyInfo(modifier = Modifier.weight(1f))
-                    }
+                    Text("NickName: ${viewModel.globalStateFlow.userName.collectAsState().value}")
+                    Text("Email: ${viewModel.globalStateFlow.userEmail.collectAsState().value}")
                 }
             }
         }

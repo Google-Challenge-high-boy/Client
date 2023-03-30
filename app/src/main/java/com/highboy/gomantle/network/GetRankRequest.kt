@@ -1,5 +1,5 @@
 package com.highboy.gomantle.network
 
-data class GetRankRequest(
+data class GetRankRequest (
     val date: String
 )

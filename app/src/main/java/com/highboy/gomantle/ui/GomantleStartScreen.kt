@@ -43,13 +43,17 @@ fun GomantleStartScreen(
                 .fillMaxSize(),
             contentAlignment = Alignment.TopCenter
         ) {
-            Text(
-                text = "Gomantle",
-                fontSize = 60.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = Color(0xFFFF9632),
-                modifier = Modifier
-                    .padding(top = 40.dp)
+//            Text(
+//                text = "Gomantle",
+//                fontSize = 60.sp,
+//                fontWeight = FontWeight.ExtraBold,
+//                color = Color(0xFFFF9632),
+//                modifier = Modifier
+//                    .padding(top = 40.dp)
+//            )
+            Image(
+                painter = painterResource(id = R.drawable.signin_top),
+                contentDescription = ""
             )
         }
         Box(

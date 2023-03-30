@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 
 class GlobalVO {
     companion object {
-        val isSignInChecked = MutableStateFlow(false)
+        var userEmail: String = ""
+        var userId: Long = 0
     }
 }
