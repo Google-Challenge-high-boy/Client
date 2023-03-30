@@ -1,6 +1,5 @@
 package com.highboy.gomantle.network
 
-data class GetSimilarityResponse (
-    val similarity: Float,
+data class GiveUpResponse(
     val answerList: Map<String, String>
 )

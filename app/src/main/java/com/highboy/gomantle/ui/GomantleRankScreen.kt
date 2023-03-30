@@ -6,9 +6,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.Card
+import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.typography
-import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -17,12 +16,13 @@ import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.highboy.gomantle.UserProfileActivity
 import com.highboy.gomantle.data.User
+import com.highboy.gomantle.data.ViewType
 import com.highboy.gomantle.ui.state.GomantleViewModel
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
 fun GomantleRankScreen(
-    modifier: Modifier = Modifier,
+    paddingValues: PaddingValues,
     viewModel: GomantleViewModel = viewModel(),
     loadMore: () -> Unit
 ) {
@@ -31,17 +31,23 @@ fun GomantleRankScreen(
 
     val listState = rememberLazyListState()
 
-    LazyColumn(
-        state = listState,
-        contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp),
-        modifier = modifier
+    Surface(
+        modifier = Modifier
+            .padding(paddingValues),
     ) {
-        itemsIndexed(users) { idx, user ->
-            UserListItem(user = user, idx = idx) {
-                startActivity(context, UserProfileActivity.newIntent(context, it), null)
+        LazyColumn(
+            modifier = Modifier
+                .padding(bottom = 12.dp),
+            state = listState
+        ) {
+            itemsIndexed(users) { idx, user ->
+                UserListItem(user = user, idx = idx) {
+                    startActivity(context, UserProfileActivity.newIntent(context, it), null)
+                }
             }
         }
     }
+
 
     InfiniteListHandler(listState) {
         loadMore()

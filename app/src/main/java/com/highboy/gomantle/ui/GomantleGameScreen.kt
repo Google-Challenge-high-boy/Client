@@ -12,10 +12,8 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.*
 import androidx.compose.material3.CardDefaults.shape
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
@@ -33,93 +31,97 @@ import com.google.accompanist.web.rememberWebViewState
 import com.highboy.gomantle.R
 import com.highboy.gomantle.data.Word
 import com.highboy.gomantle.ui.state.GomantleViewModel
+import com.highboy.gomantle.ui.theme.GomantleTheme
 
 @Composable
 fun GomantleGameScreen(
-    modifier: Modifier = Modifier,
+    paddingValues: PaddingValues,
     viewModel: GomantleViewModel = viewModel()
 ) {
-    Column(
-        modifier = modifier
+    Surface(
+        modifier = Modifier
+            .padding(paddingValues)
     ) {
-        WordInputBox(
-            modifier = Modifier
-        )
-        WordHistoryBox()
+        Column() {
+            WordInputBox()
+            WordHistoryBox()
+        }
     }
 }
 
 // 단어를 입력하는 박스
 @Composable
 fun WordInputBox(
-    modifier: Modifier,
     viewModel: GomantleViewModel = viewModel(),
 ) {
     val userGuess = viewModel.gameScreenStateFlow.userGuess.collectAsState().value
-    Card(
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 20.dp, top = 20.dp, end = 20.dp)
-            .height(intrinsicSize = IntrinsicSize.Min)
-    ) {
-        Box(
-            contentAlignment = Alignment.CenterStart
+    GomantleTheme() {
+        Card(
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 12.dp, top = 12.dp, end = 12.dp)
+                .height(intrinsicSize = IntrinsicSize.Min)
         ) {
             Box(
-                modifier = Modifier
-                    .fillMaxSize(),
-                contentAlignment = Alignment.CenterEnd
+                contentAlignment = Alignment.CenterStart
             ) {
-                Card(
-                    elevation = CardDefaults.cardElevation(4.dp),
+                Box(
                     modifier = Modifier
-                        .clip(shape)
-                        .clickable() {
+                        .fillMaxSize(),
+                    contentAlignment = Alignment.CenterEnd
+                ) {
+                    Card(
+                        elevation = CardDefaults.cardElevation(4.dp),
+                        modifier = Modifier
+                            .clip(shape)
+                            .clickable() {
+                                viewModel.checkUserGuess()
+                                viewModel.updateUserGuessTextField("")
+                            }
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .padding(12.dp)
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.baseline_check_24),
+                                contentDescription = ""
+                            )
+                        }
+                    }
+                }
+                BasicTextField(
+                    value = userGuess,
+                    onValueChange = { viewModel.updateUserGuessTextField(it) },
+                    modifier = Modifier
+                        .height(intrinsicSize = IntrinsicSize.Min)
+                        .padding(start = 12.dp, top = 12.dp, end = 36.dp, bottom = 12.dp)
+                        .fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
                             viewModel.checkUserGuess()
                             viewModel.updateUserGuessTextField("")
                         }
-                ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .padding(20.dp)
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.baseline_check_24),
-                            contentDescription = ""
-                        )
-                    }
-                }
-            }
-            BasicTextField(
-                value = userGuess,
-                onValueChange = { viewModel.updateUserGuessTextField(it) },
-                modifier = Modifier
-                    .height(intrinsicSize = IntrinsicSize.Min)
-                    .padding(start = 20.dp, top = 20.dp, end = 52.dp, bottom = 20.dp)
-                    .fillMaxWidth(),
-                keyboardOptions = KeyboardOptions.Default.copy(
-                    imeAction = ImeAction.Done
-                ),
-                keyboardActions = KeyboardActions(
-                    onDone = {
-                        viewModel.checkUserGuess()
-                        viewModel.updateUserGuessTextField("")
-                    }
-                ),
-                singleLine = true
-            )
-            if (viewModel.gameScreenStateFlow.userGuess.collectAsState().value.isEmpty()) {
-                Text(
-                    modifier = Modifier
-                        .height(intrinsicSize = IntrinsicSize.Min)
-                        .padding(20.dp),
-                    text = viewModel.gameScreenStateFlow.placeHolder.collectAsState().value
+                    ),
+                    singleLine = true
                 )
+                if (viewModel.gameScreenStateFlow.userGuess.collectAsState().value.isEmpty()) {
+                    Text(
+                        modifier = Modifier
+                            .height(intrinsicSize = IntrinsicSize.Min)
+                            .padding(12.dp),
+                        text = viewModel.gameScreenStateFlow.placeHolder.collectAsState().value
+                    )
+                }
             }
         }
     }
+
 }
 
 // 지금까지 입력한 단어들이 보여지는 박스.
@@ -135,17 +137,17 @@ fun WordHistoryBox(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight()
-                .padding(20.dp),
+                .padding(12.dp),
         ) {
             Text(
                 text = "Last prediction: " + viewModel.gameScreenStateFlow.lastPrediction.collectAsState().value,
                 modifier = Modifier
-                    .padding(20.dp)
+                    .padding(12.dp)
             )
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .padding(start = 20.dp, end = 20.dp)
+                    .padding(start = 12.dp, end = 12.dp)
             ) {
                 Spacer(
                     modifier = Modifier
@@ -173,7 +175,7 @@ fun GuessedWords(
 ) {
     val wordHistory = viewModel.gameScreenStateFlow.wordHistory.collectAsState().value
     LazyColumn(
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 20.dp)
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp)
     ) {
         itemsIndexed(wordHistory.toList()) { _, item ->
             GuessedWord(
@@ -243,7 +245,7 @@ fun WordDescription(
         ) {
             Text(
                 modifier = Modifier
-                    .padding(20.dp),
+                    .padding(12.dp),
                 text = viewModel.getDescription()
             )
             WordDictionaryWebView(viewModel.getDescription())

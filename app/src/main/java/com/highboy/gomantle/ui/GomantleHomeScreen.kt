@@ -1,12 +1,10 @@
 package com.highboy.gomantle.ui
 
+import android.annotation.SuppressLint
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
@@ -15,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.highboy.gomantle.R
 import com.highboy.gomantle.data.ViewType
@@ -27,6 +26,7 @@ fun GomantleHomeScreen(
     viewModel: GomantleViewModel = viewModel(),
     startSignIn: () -> Unit
 ) {
+
     val navigationItemContentList = listOf(
         NavigationItemContent(
             viewType = ViewType.Game,
@@ -46,34 +46,67 @@ fun GomantleHomeScreen(
             text = "MyPage"
         )
     )
-    GomantleAppContent(
-        navigationItemContentList = navigationItemContentList,
-        startSignIn = startSignIn
+    GomantleScaffold(
+        topBar = {
+            GomantleTopAppBar()
+        },
+        bottomBar = {
+            GomantleBottomNavigationBar(
+                navigationItemContentList = navigationItemContentList)
+        },
+        startSignIn = {
+            startSignIn()
+        }
     )
 }
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun GomantleAppContent(
+private fun GomantleScaffold(
     viewModel: GomantleViewModel = viewModel(),
-    navigationItemContentList: List<NavigationItemContent>,
+    topBar: @Composable () -> Unit,
+    bottomBar: @Composable () -> Unit,
     startSignIn: () -> Unit
 ) {
-    Column() {
+    Scaffold(
+        topBar = {
+            topBar()
+        },
+        bottomBar = {
+            bottomBar()
+        }
+    ) {
         GomantleOnlyContentView(
-            modifier = Modifier.weight(13f),
+            paddingValues = it,
             currentTab = viewModel.globalStateFlow.uiState.collectAsState().value,
             startSignIn = startSignIn
-        )
-        GomantleBottomNavigationBar(
-            navigationItemContentList = navigationItemContentList,
-            modifier = Modifier.weight(1f)
         )
     }
 }
 
+//@Composable
+//private fun GomantleAppContent(
+//    viewModel: GomantleViewModel = viewModel(),
+//    navigationItemContentList: List<NavigationItemContent>,
+//    startSignIn: () -> Unit
+//) {
+//    Column() {
+//        GomantleOnlyContentView(
+//            modifier = Modifier.weight(13f),
+//            currentTab = viewModel.globalStateFlow.uiState.collectAsState().value,
+//            startSignIn = startSignIn
+//        )
+//        GomantleBottomNavigationBar(
+//            navigationItemContentList = navigationItemContentList,
+//            modifier = Modifier.weight(1f)
+//        )
+//    }
+//}
+
 @Composable
 fun GomantleOnlyContentView(
-    modifier: Modifier = Modifier,
+    paddingValues: PaddingValues,
     viewModel: GomantleViewModel = viewModel(),
     currentTab: ViewType,
     startSignIn: () -> Unit
@@ -84,17 +117,17 @@ fun GomantleOnlyContentView(
     when(currentTab) {
         ViewType.Game -> {
             GomantleGameScreen(
-                modifier = modifier
+                paddingValues = paddingValues
             )
         }
         ViewType.Friends -> {
             if(viewModel.globalStateFlow.isSignedIn.collectAsState().value) {
                 GomantleFriendsScreen(
-                    modifier = modifier
+                    paddingValues = paddingValues
                 )
             } else {
                 RecommendSignIn(
-                    modifier = modifier,
+                    paddingValues = paddingValues,
                     startSignIn = startSignIn
                 )
             }
@@ -102,7 +135,7 @@ fun GomantleOnlyContentView(
         ViewType.Rank -> {
             if(viewModel.globalStateFlow.isSignedIn.collectAsState().value) {
                 GomantleRankScreen(
-                    modifier = modifier,
+                    paddingValues = paddingValues,
                     loadMore = {
                         if(!isLoading && !isAllLoaded) {
                             viewModel.loadMore()
@@ -111,7 +144,7 @@ fun GomantleOnlyContentView(
                 )
             } else {
                 RecommendSignIn(
-                    modifier = modifier,
+                    paddingValues = paddingValues,
                     startSignIn = startSignIn
                 )
             }
@@ -119,11 +152,11 @@ fun GomantleOnlyContentView(
         ViewType.MyPage -> {
             if(viewModel.globalStateFlow.isSignedIn.collectAsState().value) {
                 GomantleMyPageScreen(
-                    modifier = modifier
+                    paddingValues = paddingValues
                 )
             } else {
                 RecommendSignIn(
-                    modifier = modifier,
+                    paddingValues = paddingValues,
                     startSignIn = startSignIn
                 )
             }
@@ -134,11 +167,12 @@ fun GomantleOnlyContentView(
 
 @Composable
 fun RecommendSignIn(
-    modifier: Modifier,
+    paddingValues: PaddingValues,
     startSignIn: () -> Unit
 ) {
     Column(
-        modifier = modifier
+        modifier = Modifier
+            .padding(paddingValues)
             .fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -161,13 +195,13 @@ fun RecommendSignIn(
 
 @Composable
 private fun GomantleBottomNavigationBar(
-    modifier: Modifier,
     viewModel: GomantleViewModel = viewModel(),
     navigationItemContentList: List<NavigationItemContent>,
 ) {
     NavigationBar(
-        modifier = modifier,
-        containerColor = Color(255, 200, 155)
+        modifier = Modifier
+            .height(50.dp),
+//        containerColor = Color(255, 200, 155)
     ) {
         navigationItemContentList.forEachIndexed { _, navItem ->
             NavigationBarItem(
@@ -191,6 +225,34 @@ private fun GomantleBottomNavigationBar(
             )
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun GomantleTopAppBar(
+    viewModel: GomantleViewModel = viewModel()
+) {
+    TopAppBar(
+        title = {
+            when(viewModel.globalStateFlow.uiState.collectAsState().value) {
+                ViewType.Game -> TopBarText("Game")
+                ViewType.Friends -> TopBarText("Friends")
+                ViewType.Rank -> TopBarText("Rank")
+                else -> TopBarText("My Page")
+            }
+        }
+    )
+}
+
+@Composable
+fun TopBarText(
+    text: String
+) {
+    Text(
+        text = text,
+        fontSize = 40.sp,
+        fontWeight = FontWeight.Bold
+    )
 }
 
 private data class NavigationItemContent(

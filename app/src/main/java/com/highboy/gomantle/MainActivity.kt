@@ -14,15 +14,19 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.MaterialTheme
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.GraphicsLayerScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.auth.api.identity.SignInClient
@@ -53,8 +57,22 @@ class MainActivity : ComponentActivity() {
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colors.background
+                    color = MaterialTheme.colorScheme.background
                 ) {
+                    val backgroundColor = MaterialTheme.colorScheme.background
+                    Log.e("backgroundColor", MaterialTheme.colorScheme.toString())
+                    val systemUiController = rememberSystemUiController()
+                    val useDarkIcons = !isSystemInDarkTheme()
+
+                    DisposableEffect(
+                        systemUiController, useDarkIcons
+                    ) {
+                        systemUiController.setSystemBarsColor(
+                            color = backgroundColor,
+                            darkIcons = useDarkIcons
+                        )
+                        onDispose {}
+                    }
                     viewModel.loadSharedPreferences()
                     GomantleApp(
                         startSignIn = {

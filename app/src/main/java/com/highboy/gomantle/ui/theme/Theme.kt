@@ -1,6 +1,7 @@
 package com.highboy.gomantle.ui.theme
 
 
+import android.util.Log
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
@@ -83,7 +84,7 @@ fun GomantleTheme(
     } else {
         DarkColors
     }
-
+    Log.e("GomantleTheme", colors.toString())
     MaterialTheme(
         colorScheme = colors,
         content = content,

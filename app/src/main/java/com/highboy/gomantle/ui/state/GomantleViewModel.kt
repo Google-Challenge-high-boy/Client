@@ -9,6 +9,8 @@ import com.highboy.gomantle.PrefRepository
 import com.highboy.gomantle.data.User
 import com.highboy.gomantle.data.ViewType
 import com.highboy.gomantle.data.Word
+import com.highboy.gomantle.network.GetRankRequest
+import com.highboy.gomantle.network.GetRankResponse
 import com.highboy.gomantle.network.GetSimilarityRequest
 import com.highboy.gomantle.network.GetSimilarityResponse
 import com.highboy.gomantle.network.RetrofitService.Companion.retrofitService
@@ -21,7 +23,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import java.io.IOException
-
 
 class GomantleViewModel() : ViewModel() {
 
@@ -49,14 +50,19 @@ class GomantleViewModel() : ViewModel() {
         gameScreenMutableStateFlow._lastPrediction.asStateFlow(),
         gameScreenMutableStateFlow._tryCount.asStateFlow()
     )
+
     private val friendScreenMutableStateFlow = FriendScreenMutableStateFlow()
     val friendScreenStateFlow = FriendScreenStateFlow(
         friendScreenMutableStateFlow.tmp
     )
+
     private val rankScreenMutableStateFlow = RankScreenMutableStateFlow()
     val rankScreenStateFlow = RankScreenStateFlow(
-        rankScreenMutableStateFlow.tmp
+        rankScreenMutableStateFlow._selectedDate.asStateFlow(),
+        rankScreenMutableStateFlow._myRank.asStateFlow(),
+        rankScreenMutableStateFlow._allRank.asStateFlow()
     )
+
     private val myPageScreenMutableStateFlow = MyPageScreenMutableStateFlow()
     val myPageScreenStateFlow = MyPageScreenStateFlow(
         myPageScreenMutableStateFlow.tmp
@@ -74,7 +80,10 @@ class GomantleViewModel() : ViewModel() {
 
     private var pageCount = 1
 
-    // global methods
+    /**
+     * Global
+     */
+
     fun updateCurrentView(viewType: ViewType) {
         globalMutableStateFlow._uiState.update { viewType }
     }
@@ -86,7 +95,10 @@ class GomantleViewModel() : ViewModel() {
         }
     }
 
-    // game screen methods
+    /**
+     * Game Screen
+     */
+
     fun updateLastPrediction(word: String) {
         gameScreenMutableStateFlow._lastPrediction.update { word }
         pref.putString(GlobalConstants.LAST_PREDICTION, gameScreenStateFlow.lastPrediction.value)
@@ -141,10 +153,10 @@ class GomantleViewModel() : ViewModel() {
                 retrofitService.getSimilarity(getSimilarityRequest)
             } catch(e: IOException) {
                 e.printStackTrace()
-                GetSimilarityResponse(0, 0f, mapOf())
+                GetSimilarityResponse(0f, mapOf())
             } catch(e: HttpException) {
                 e.printStackTrace()
-                GetSimilarityResponse(0, 0f, mapOf())
+                GetSimilarityResponse(0f, mapOf())
             }
             similarity = getSimilarityResponse.similarity
             when(similarity) {
@@ -193,7 +205,6 @@ class GomantleViewModel() : ViewModel() {
     // friend screen methods
     fun loadMore() {
         viewModelScope.launch {
-
             _isLoading.update { true }
             delay(1000)
             val items = arrayListOf<User>()
@@ -211,7 +222,9 @@ class GomantleViewModel() : ViewModel() {
         }
     }
 
-    // game
+    /**
+     * Friend Screen
+     */
 
 
 
@@ -234,6 +247,31 @@ class GomantleViewModel() : ViewModel() {
         }
     }
 
+
+    /**
+     * Rank Screen
+     */
+    fun loadRankInfo() {
+        val getRankRequest = GetRankRequest(rankScreenStateFlow.selectedDate.value)
+        viewModelScope.launch {
+            val getRankResponse: GetRankResponse = try {
+                retrofitService.getRank(getRankRequest)
+            } catch(e: IOException) {
+                e.printStackTrace()
+                GetRankResponse(0, listOf(""))
+            } catch(e: HttpException) {
+                e.printStackTrace()
+                GetRankResponse(0, listOf(""))
+            }
+            rankScreenMutableStateFlow._myRank.update { getRankResponse.myRank }
+            rankScreenMutableStateFlow._allRank.update { getRankResponse.allRank }
+        }
+    }
+
+
+    /**
+     * MyPage Screen
+     */
     fun loadSharedPreferences() {
         globalMutableStateFlow._userEmail.update { pref.getString(GlobalConstants.USER_EMAIL) }
         gameScreenMutableStateFlow._lastPrediction.update { pref.getString(GlobalConstants.LAST_PREDICTION) }

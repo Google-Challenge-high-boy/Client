@@ -3,6 +3,7 @@ package com.highboy.gomantle.ui
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -10,32 +11,35 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun GomantleMyPageScreen(
-    modifier: Modifier = Modifier
+    paddingValues: PaddingValues
 ) {
-    Box(
-        modifier = modifier
+    Surface(
+        modifier = Modifier
+            .padding(paddingValues)
     ) {
-        Card(
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(20.dp)
-                .height(intrinsicSize = IntrinsicSize.Min)
-        ) {
-            Column() {
-                Row(
-                    modifier = Modifier
-                        .weight(1f)
-                ) {
-                    MyInfo(modifier = Modifier.weight(1f))
-                    MyInfo(modifier = Modifier.weight(1f))
-                }
-                Row(
-                    modifier = Modifier
-                        .weight(1f)
-                ) {
-                    MyInfo(modifier = Modifier.weight(1f))
-                    MyInfo(modifier = Modifier.weight(1f))
+        Box{
+            Card(
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(12.dp)
+                    .height(intrinsicSize = IntrinsicSize.Min)
+            ) {
+                Column() {
+                    Row(
+                        modifier = Modifier
+                            .weight(1f)
+                    ) {
+                        MyInfo(modifier = Modifier.weight(1f))
+                        MyInfo(modifier = Modifier.weight(1f))
+                    }
+                    Row(
+                        modifier = Modifier
+                            .weight(1f)
+                    ) {
+                        MyInfo(modifier = Modifier.weight(1f))
+                        MyInfo(modifier = Modifier.weight(1f))
+                    }
                 }
             }
         }
