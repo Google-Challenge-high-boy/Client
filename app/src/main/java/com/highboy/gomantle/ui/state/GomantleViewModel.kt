@@ -239,6 +239,10 @@ class GomantleViewModel() : ViewModel() {
                     }
                     pref.putListOfWord(GlobalConstants.WORD_HISTORY, gameScreenStateFlow.wordHistory.value)
                     pref.putInt(GlobalConstants.TRY_COUNT, gameScreenStateFlow.tryCount.value)
+                    gameScreenMutableStateFlow._tryCount.update {
+                        it + 1
+                    }
+                    pref.putInt(GlobalConstants.TRY_COUNT, gameScreenStateFlow.tryCount.value)
                 }
             }
             Log.e("similarity", "${getSimilarityResponse.similarity}")

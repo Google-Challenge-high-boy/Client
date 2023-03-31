@@ -143,6 +143,11 @@ fun WordHistoryBox(
                 modifier = Modifier
                     .padding(12.dp)
             )
+            Text(
+                text = "Try count: " + viewModel.gameScreenStateFlow.tryCount.collectAsState().value,
+                modifier = Modifier
+                    .padding(start = 12.dp, end = 12.dp)
+            )
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier

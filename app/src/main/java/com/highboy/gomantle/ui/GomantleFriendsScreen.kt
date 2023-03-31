@@ -13,9 +13,12 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -54,7 +57,11 @@ fun GomantleFriendsScreen(
                 }
             }
         }
-        MySnackBar()
+        Box(
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            MySnackBar()
+        }
     }
 }
 
@@ -83,11 +90,13 @@ fun FriendsListItem(
     }
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun FriendInputBox(
     viewModel: GomantleViewModel = viewModel(),
 ) {
     val friendId = viewModel.friendScreenStateFlow.friendId.collectAsState().value
+    val keyboardController = LocalSoftwareKeyboardController.current
     GomantleTheme() {
         Card(
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
@@ -108,6 +117,7 @@ fun FriendInputBox(
                         modifier = Modifier
                             .clip(CardDefaults.shape)
                             .clickable() {
+                                keyboardController?.hide()
                                 viewModel.checkFriendId()
                                 viewModel.updateFriendIdTextField("")
                             }
@@ -138,6 +148,7 @@ fun FriendInputBox(
                     ),
                     keyboardActions = KeyboardActions(
                         onDone = {
+                            keyboardController?.hide()
                             viewModel.checkFriendId()
                             viewModel.updateFriendIdTextField("")
                         }
@@ -161,12 +172,43 @@ fun FriendInputBox(
 fun MySnackBar(
     viewModel: GomantleViewModel = viewModel()
 ) {
+    Box(
+        modifier = Modifier
+            .fillMaxHeight(),
+        contentAlignment = Alignment.BottomCenter
+    ) {
+        val snackBarState = remember { SnackbarHostState() }
+
+        val snackbarText = viewModel.friendScreenStateFlow.snackBarText.collectAsState().value
+
+        LaunchedEffect(viewModel.friendScreenStateFlow.isSnackBarShowing.collectAsState().value) {
+            Log.e("Launched Effect", "")
+            if (snackBarState.currentSnackbarData !=null){
+                snackBarState.currentSnackbarData?.dismiss()
+            }
+            snackBarState.showSnackbar(
+                snackbarText,
+                "확인",
+                duration = SnackbarDuration.Short
+            )
+        }
+        SnackbarHost(hostState = snackBarState, modifier = Modifier.align(Alignment.BottomCenter))
+    }
+}
+@Composable
+fun MySnackBars() {
 
     val snackBarState = remember { SnackbarHostState() }
 
     val coroutineScope = rememberCoroutineScope()
 
-    val snackbarText = viewModel.friendScreenStateFlow.snackBarText.collectAsState().value
+    val buttonTitle: (SnackbarData?) -> String = { snackbarData ->
+        if (snackbarData != null) {
+            "스낵바 숨기기"
+        } else {
+            "스낵바 보여주기"
+        }
+    }
 
     val buttonColor: (SnackbarData?) -> Color = { snackbarData ->
         if (snackbarData != null) {
@@ -175,16 +217,35 @@ fun MySnackBar(
             Color.Blue
         }
     }
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
 
-    LaunchedEffect(viewModel.friendScreenStateFlow.isSnackBarShowing.collectAsState().value) {
-        if (snackBarState.currentSnackbarData !=null){
-            snackBarState.currentSnackbarData?.dismiss()
+        Button(colors= ButtonDefaults.buttonColors(
+            containerColor =  buttonColor(snackBarState.currentSnackbarData),
+            contentColor = Color.White
+        ),
+            onClick = {
+                if (snackBarState.currentSnackbarData !=null){
+                    snackBarState.currentSnackbarData?.dismiss()
+                    return@Button
+                }
+                coroutineScope.launch {
+                    val result = snackBarState.showSnackbar(
+                        "가즈아 빡코딩",
+                        "확인",
+                        duration = SnackbarDuration.Short
+                    ).let {
+                        when (it) {
+                            SnackbarResult.Dismissed -> Log.d("TAG", "스낵바 닫아짐")
+                            SnackbarResult.ActionPerformed -> Log.d("TAG", "MYSnackBar: 스낵바 확인 버튼 클릭")
+                        }
+                    }
+                }
+            }) {
+            Text(buttonTitle(snackBarState.currentSnackbarData))
         }
-        val result = snackBarState.showSnackbar(
-            snackbarText,
-            "확인",
-            duration = SnackbarDuration.Short
-        )
-    }
 
+    }
 }
