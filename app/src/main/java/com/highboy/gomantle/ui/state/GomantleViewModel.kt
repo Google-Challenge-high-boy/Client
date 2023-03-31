@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.highboy.gomantle.GlobalConstants
 import com.highboy.gomantle.PrefRepository
+import com.highboy.gomantle.data.FriendDataProvider
 import com.highboy.gomantle.data.User
 import com.highboy.gomantle.data.ViewType
 import com.highboy.gomantle.data.Word
@@ -27,43 +28,46 @@ class GomantleViewModel() : ViewModel() {
 
     private val globalMutableStateFlow = GlobalMutableStateFlow()
     val globalStateFlow = GlobalStateFlow(
-        globalMutableStateFlow._date.asStateFlow(),
-        globalMutableStateFlow._userName.asStateFlow(),
-        globalMutableStateFlow._userId.asStateFlow(),
-        globalMutableStateFlow._isSigningUp.asStateFlow(),
-        globalMutableStateFlow._isLoading.asStateFlow(),
-        globalMutableStateFlow._uiState.asStateFlow(),
-        globalMutableStateFlow._userEmail.asStateFlow(),
-        globalMutableStateFlow._isFinished.asStateFlow(),
-        globalMutableStateFlow._isSignedIn.asStateFlow(),
-        globalMutableStateFlow._isSignInChecked.asStateFlow()
+        date = globalMutableStateFlow._date.asStateFlow(),
+        userName = globalMutableStateFlow._userName.asStateFlow(),
+        userId = globalMutableStateFlow._userId.asStateFlow(),
+        isSigningUp = globalMutableStateFlow._isSigningUp.asStateFlow(),
+        isLoading = globalMutableStateFlow._isLoading.asStateFlow(),
+        uiState = globalMutableStateFlow._uiState.asStateFlow(),
+        userEmail = globalMutableStateFlow._userEmail.asStateFlow(),
+        isFinished = globalMutableStateFlow._isFinished.asStateFlow(),
+        isSignedIn = globalMutableStateFlow._isSignedIn.asStateFlow(),
+        isSignInChecked = globalMutableStateFlow._isSignInChecked.asStateFlow()
     )
 
     private val gameScreenMutableStateFlow = GameScreenMutableStateFlow()
     val gameScreenStateFlow = GameScreenStateFlow(
-        gameScreenMutableStateFlow._userGuess.asStateFlow(),
-        gameScreenMutableStateFlow._wordHistory.asStateFlow(),
-        gameScreenMutableStateFlow._selectedWord.asStateFlow(),
-        gameScreenMutableStateFlow._isWordDescriptionVisible.asStateFlow(),
-        gameScreenMutableStateFlow._placeHolder.asStateFlow(),
-        gameScreenMutableStateFlow._isWarningDialogShowing.asStateFlow(),
-        gameScreenMutableStateFlow._lastPrediction.asStateFlow(),
-        gameScreenMutableStateFlow._tryCount.asStateFlow()
+        userGuess = gameScreenMutableStateFlow._userGuess.asStateFlow(),
+        wordHistory = gameScreenMutableStateFlow._wordHistory.asStateFlow(),
+        selectedWord = gameScreenMutableStateFlow._selectedWord.asStateFlow(),
+        isWordDescriptionVisible = gameScreenMutableStateFlow._isWordDescriptionVisible.asStateFlow(),
+        placeHolder = gameScreenMutableStateFlow._placeHolder.asStateFlow(),
+        isWarningDialogShowing = gameScreenMutableStateFlow._isWarningDialogShowing.asStateFlow(),
+        lastPrediction = gameScreenMutableStateFlow._lastPrediction.asStateFlow(),
+        tryCount = gameScreenMutableStateFlow._tryCount.asStateFlow()
     )
 
     private val friendScreenMutableStateFlow = FriendScreenMutableStateFlow()
     val friendScreenStateFlow = FriendScreenStateFlow(
-        friendScreenMutableStateFlow._friendsEmailList.asStateFlow(),
-        friendScreenMutableStateFlow._friendsIdList.asStateFlow()
+        friendId = friendScreenMutableStateFlow._friendId.asStateFlow(),
+        placeHolder = friendScreenMutableStateFlow._placeHolder.asStateFlow(),
+        friendsList = friendScreenMutableStateFlow._friendsList.asStateFlow(),
+        isSnackBarShowing = friendScreenMutableStateFlow._isSnackBarShowing.asStateFlow(),
+        snackBarText = friendScreenMutableStateFlow._snackBarText.asStateFlow()
     )
 
     private val rankScreenMutableStateFlow = RankScreenMutableStateFlow()
     val rankScreenStateFlow = RankScreenStateFlow(
-        rankScreenMutableStateFlow._selectedYear.asStateFlow(),
-        rankScreenMutableStateFlow._selectedMonth.asStateFlow(),
-        rankScreenMutableStateFlow._selectedDayOfMonth.asStateFlow(),
-        rankScreenMutableStateFlow._myRank.asStateFlow(),
-        rankScreenMutableStateFlow._allRank.asStateFlow()
+        selectedYear = rankScreenMutableStateFlow._selectedYear.asStateFlow(),
+        selectedMonth = rankScreenMutableStateFlow._selectedMonth.asStateFlow(),
+        selectedDayOfMonth = rankScreenMutableStateFlow._selectedDayOfMonth.asStateFlow(),
+        myRank = rankScreenMutableStateFlow._myRank.asStateFlow(),
+        allRank = rankScreenMutableStateFlow._allRank.asStateFlow()
     )
 
     private val myPageScreenMutableStateFlow = MyPageScreenMutableStateFlow()
@@ -142,7 +146,7 @@ class GomantleViewModel() : ViewModel() {
 
     fun launchLoading() {
         viewModelScope.launch {
-            delay(5000)
+            delay(3000)
             globalMutableStateFlow._isLoading.update { false }
         }
     }
@@ -265,7 +269,7 @@ class GomantleViewModel() : ViewModel() {
             delay(1000)
             val items = arrayListOf<User>()
             repeat(20) {
-                items.add(User("example@gmail.com", "User$it"))
+                items.add(User(0, "example@gmail.com", "User$it"))
             }
             _userList.update {
                 _userList.value + items
@@ -313,6 +317,42 @@ class GomantleViewModel() : ViewModel() {
         }
     }
 
+    fun updateFriendIdTextField(friendId: String) {
+        friendScreenMutableStateFlow._friendId.update {
+            friendId
+        }
+    }
+
+    fun checkFriendId() {
+        if(friendScreenStateFlow.friendId.value == "") {
+            viewModelScope.launch {
+                friendScreenMutableStateFlow._placeHolder.update { "Please enter valid Id!" }
+                delay(1500)
+                friendScreenMutableStateFlow._placeHolder.update { "friend Id" }
+            }
+            return
+        }
+        for(user in FriendDataProvider.friendsList) {
+            if(user.userId == friendScreenStateFlow.friendId.value.toLong()) {
+                friendScreenMutableStateFlow._friendsList.update {
+                    it + user
+                }
+                viewModelScope.launch {
+                    friendScreenMutableStateFlow._snackBarText.update { "Added successfully" }
+                    friendScreenMutableStateFlow._isSnackBarShowing.update { true }
+                    delay(3000)
+                    friendScreenMutableStateFlow._isSnackBarShowing.update { false }
+                }
+                return
+            }
+        }
+        viewModelScope.launch {
+            friendScreenMutableStateFlow._snackBarText.update { "There is no such user." }
+            friendScreenMutableStateFlow._isSnackBarShowing.update { true }
+            delay(3000)
+            friendScreenMutableStateFlow._isSnackBarShowing.update { false }
+        }
+    }
 
     /**
      * Rank Screen

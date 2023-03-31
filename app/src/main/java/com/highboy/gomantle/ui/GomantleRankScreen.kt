@@ -17,7 +17,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.highboy.gomantle.UserProfileActivity
 import com.highboy.gomantle.data.User
 import com.highboy.gomantle.ui.state.GomantleViewModel
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -48,7 +47,6 @@ fun GomantleRankScreen(
             ) {
                 itemsIndexed(users) { idx, user ->
                     UserListItem(user = user, idx = idx) {
-                        startActivity(context, UserProfileActivity.newIntent(context, it), null)
                     }
                 }
             }
@@ -78,11 +76,13 @@ fun GomantleDatePickerDialog(
         calendar.get(Calendar.MONTH),
         calendar.get(Calendar.DAY_OF_MONTH)
     )
+
     Box(
         modifier = Modifier
             .fillMaxWidth(),
         contentAlignment = Alignment.Center
     ) {
+        val context = LocalContext.current
         Button(
             onClick = {
                 datePickerDialog.show()
