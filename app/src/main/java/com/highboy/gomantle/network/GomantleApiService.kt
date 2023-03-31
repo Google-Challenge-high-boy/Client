@@ -19,8 +19,9 @@ interface GomantleApiService {
 
     // Game
 
-    @POST("gomantle/wrong")
+    @POST("gomantle")
     suspend fun getSimilarity(
+        @HeaderMap headerMap: Map<String, Long>,
         @Body body: GetSimilarityRequest
     ): GetSimilarityResponse
 

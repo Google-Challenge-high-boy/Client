@@ -141,12 +141,12 @@ fun WordHistoryBox(
             Text(
                 text = "Last prediction: " + viewModel.gameScreenStateFlow.lastPrediction.collectAsState().value,
                 modifier = Modifier
-                    .padding(12.dp)
+                    .padding(start = 12.dp, top = 12.dp, end = 12.dp)
             )
             Text(
                 text = "Try count: " + viewModel.gameScreenStateFlow.tryCount.collectAsState().value,
                 modifier = Modifier
-                    .padding(start = 12.dp, end = 12.dp)
+                    .padding(start = 12.dp, end = 12.dp, bottom = 12.dp)
             )
             Box(
                 contentAlignment = Alignment.Center,
@@ -247,11 +247,6 @@ fun WordDescription(
                     viewModel.hideWordDescription()
                 }
         ) {
-            Text(
-                modifier = Modifier
-                    .padding(12.dp),
-                text = viewModel.getDescription()
-            )
             WordDictionaryWebView(viewModel.getDescription())
         }
     }
