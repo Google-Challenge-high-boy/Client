@@ -138,6 +138,7 @@ fun WordHistoryBox(
                 .fillMaxHeight()
                 .padding(12.dp),
         ) {
+
             Text(
                 text = "Last prediction: " + viewModel.gameScreenStateFlow.lastPrediction.collectAsState().value,
                 modifier = Modifier
@@ -146,8 +147,23 @@ fun WordHistoryBox(
             Text(
                 text = "Try count: " + viewModel.gameScreenStateFlow.tryCount.collectAsState().value,
                 modifier = Modifier
-                    .padding(start = 12.dp, end = 12.dp, bottom = 12.dp)
+                    .padding(start = 12.dp, end = 12.dp)
             )
+            Card(
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                modifier = Modifier
+                    .padding(start = 12.dp, bottom = 12.dp)
+                    .height(30.dp)
+                    .clickable {
+                        viewModel.giveUp()
+                    }
+            ) {
+                Text(
+                    text = "Give up",
+                    modifier = Modifier
+                        .padding(4.dp),
+                )
+            }
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier

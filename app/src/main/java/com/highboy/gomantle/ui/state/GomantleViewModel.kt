@@ -49,7 +49,8 @@ class GomantleViewModel() : ViewModel() {
         placeHolder = gameScreenMutableStateFlow._placeHolder.asStateFlow(),
         isWarningDialogShowing = gameScreenMutableStateFlow._isWarningDialogShowing.asStateFlow(),
         lastPrediction = gameScreenMutableStateFlow._lastPrediction.asStateFlow(),
-        tryCount = gameScreenMutableStateFlow._tryCount.asStateFlow()
+        tryCount = gameScreenMutableStateFlow._tryCount.asStateFlow(),
+        answerList = gameScreenMutableStateFlow._answerList.asStateFlow()
     )
 
     private val friendScreenMutableStateFlow = FriendScreenMutableStateFlow()
@@ -187,6 +188,24 @@ class GomantleViewModel() : ViewModel() {
         }
     }
 
+    fun giveUp() {
+        viewModelScope.launch {
+            val giveUpResponse: GiveUpResponse = try {
+                retrofitService.getAnswerList()
+            } catch(e: IOException) {
+                e.printStackTrace()
+                GiveUpResponse(mapOf("" to ""))
+            } catch(e: HttpException) {
+                e.printStackTrace()
+                GiveUpResponse(mapOf("" to ""))
+            }
+            gameScreenMutableStateFlow._answerList.update {
+                giveUpResponse.answerList
+            }
+            Log.e("giveUp", gameScreenStateFlow.answerList.value.toString())
+        }
+    }
+
     fun checkUserGuess() {
         if(gameScreenStateFlow.userGuess.value == "") {
             viewModelScope.launch {
@@ -210,7 +229,7 @@ class GomantleViewModel() : ViewModel() {
         val getSimilarityRequest = GetSimilarityRequest(gameScreenStateFlow.userGuess.value, gameScreenStateFlow.tryCount.value)
         viewModelScope.launch {
             val getSimilarityResponse: GetSimilarityResponse = try {
-                retrofitService.getSimilarity(getSimilarityRequest)
+                retrofitService.getSimilarity(mapOf("userId" to globalStateFlow.userId.value), getSimilarityRequest)
             } catch(e: IOException) {
                 e.printStackTrace()
                 GetSimilarityResponse(0f, mapOf())

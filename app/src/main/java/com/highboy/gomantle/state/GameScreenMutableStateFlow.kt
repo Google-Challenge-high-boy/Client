@@ -14,5 +14,5 @@ data class GameScreenMutableStateFlow(
     val _isWarningDialogShowing: MutableStateFlow<Boolean> = MutableStateFlow(false),
     val _lastPrediction: MutableStateFlow<String> = MutableStateFlow(""),
     val _tryCount: MutableStateFlow<Int> = MutableStateFlow(0),
-
+    val _answerList: MutableStateFlow<Map<String, String>> = MutableStateFlow(mapOf("" to ""))
 )

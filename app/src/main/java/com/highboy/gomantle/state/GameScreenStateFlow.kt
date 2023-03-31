@@ -1,6 +1,7 @@
 package com.highboy.gomantle.state
 
 import com.highboy.gomantle.data.Word
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -12,5 +13,6 @@ data class GameScreenStateFlow(
     val placeHolder: StateFlow<String>,
     val isWarningDialogShowing: StateFlow<Boolean>,
     val lastPrediction: StateFlow<String>,
-    val tryCount: StateFlow<Int>
+    val tryCount: StateFlow<Int>,
+    val answerList: StateFlow<Map<String, String>>
 )
