@@ -152,7 +152,7 @@ fun WordHistoryBox(
             Card(
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                 modifier = Modifier
-                    .padding(start = 12.dp, bottom = 12.dp)
+                    .padding(start = 12.dp, top = 6.dp, bottom = 12.dp)
                     .height(30.dp)
                     .clickable {
                         viewModel.giveUp()

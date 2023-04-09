@@ -2,6 +2,7 @@ package com.highboy.gomantle.ui
 
 import android.app.DatePickerDialog
 import android.util.Log
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,9 +15,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.highboy.gomantle.R
 import com.highboy.gomantle.data.User
 import com.highboy.gomantle.ui.state.GomantleViewModel
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -39,7 +45,7 @@ fun GomantleRankScreen(
             .padding(paddingValues),
     ) {
         Column {
-            GomantleDatePickerDialog()
+//            GomantleDatePickerDialog()
             LazyColumn(
                 modifier = Modifier
                     .padding(bottom = 12.dp),
@@ -107,14 +113,50 @@ fun UserListItem(
                 navigateToProfile(user)
             }
     ) {
-        Row(
+        Box(
             modifier = Modifier
-                .padding(12.dp)
+                .fillMaxSize()
         ) {
-            Column() {
-                Text(text = "user.userName$idx", style = typography.titleMedium)
-                Spacer(Modifier.height(4.dp))
-                Text(text = "VIEW DETAIL", style = typography.bodyMedium)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize(),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.profile_img),
+                        contentDescription = "",
+                        modifier = Modifier
+                            .padding(start = 6.dp, end = 6.dp)
+                    )
+                    Column() {
+                        Text(text = "${user.userName}", style = typography.titleMedium, modifier = Modifier.padding(top = 6.dp))
+                        Spacer(Modifier.height(4.dp))
+                        Text(text = "${user.email}", style = typography.titleMedium, modifier = Modifier.padding(bottom = 6.dp))
+                    }
+                }
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize(),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        modifier = Modifier
+                            .padding(top = 12.dp, end = 24.dp),
+                        text = "$idx",
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
         }
     }

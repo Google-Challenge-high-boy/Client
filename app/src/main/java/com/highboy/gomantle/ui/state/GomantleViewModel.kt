@@ -200,7 +200,15 @@ class GomantleViewModel() : ViewModel() {
                 GiveUpResponse(mapOf("" to ""))
             }
             gameScreenMutableStateFlow._answerList.update {
-                giveUpResponse.answerList
+                val list1 = giveUpResponse.answerList.toList()
+                val list2 = list1.sortedByDescending { it.second.toFloat() }
+                val map1 = list2.toMap()
+                map1
+            }
+            gameScreenMutableStateFlow._wordHistory.update {
+                gameScreenStateFlow.answerList.value.map {
+                    Word(it.key, it.value.toFloat())
+                }
             }
             Log.e("giveUp", gameScreenStateFlow.answerList.value.toString())
         }
@@ -281,7 +289,7 @@ class GomantleViewModel() : ViewModel() {
     // 단어가 존재하지 않으면 단어를 추가.
     private fun addGuessedWord(guessedWord: String, similarity: Float) {
         gameScreenMutableStateFlow._wordHistory.update { guessedWords ->
-            (guessedWords + Word(guessedWord, similarity)).sortedBy { it.similarity }
+            (guessedWords + Word(guessedWord, similarity)).sortedByDescending { it.similarity }
         }
     }
 
@@ -292,7 +300,7 @@ class GomantleViewModel() : ViewModel() {
             delay(1000)
             val items = arrayListOf<User>()
             repeat(20) {
-                items.add(User(0, "example@gmail.com", "User$it"))
+                items.add(FriendDataProvider.friendsList[it])
             }
             _userList.update {
                 _userList.value + items

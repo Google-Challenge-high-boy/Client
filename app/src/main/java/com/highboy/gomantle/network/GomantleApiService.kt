@@ -19,13 +19,13 @@ interface GomantleApiService {
 
     // Game
 
-    @POST("gomantle")
+    @POST("v1/komantle")
     suspend fun getSimilarity(
         @HeaderMap headerMap: Map<String, Long>,
         @Body body: GetSimilarityRequest
     ): GetSimilarityResponse
 
-    @GET("gomantle")
+    @GET("v1/komantle")
     suspend fun getAnswerList(): GiveUpResponse
 
     // friend
